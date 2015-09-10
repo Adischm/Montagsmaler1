@@ -11,13 +11,20 @@ import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 /*import android.app.Activity;
 import android.widget.Toast;
 import org.apache.http.HttpResponse;
@@ -42,12 +49,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public Button button1;
     public TextView text1;
+    public TextView username;
+    public TextView password;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         text1 = (TextView) findViewById(R.id.text1);
         button1 = (Button) findViewById(R.id.button1);
+        username = (TextView) findViewById(R.id.username);
+        password = (TextView) findViewById(R.id.password);
         button1.setOnClickListener(this);
 
         //Verhindert, dass der Internetzugriff über einen eigenen Thread laufen muss. Ggf Auslagerung in eigenen Thread
@@ -99,11 +110,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void requestTest(){
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
+        HttpPost post = new HttpPost("http://192.168.43.109/HelloWorldTest/");
+
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        params.add(new BasicNameValuePair("user", "Bob"));
         try {
-            response = httpclient.execute(new HttpGet("http://192.168.43.109/HelloWorldTest/TestController.php?functionName=getLoginFromDatabase"));
+            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            // writing error to Log
+            e.printStackTrace();
+        }
+        try {
+            response = httpclient.execute(new HttpGet("http://http://192.168.43.226/MontagsMalerService/validateUser.xml?Benutzername=admin&Passwort=test"));
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //   response = httpclient.execute(new HttpGet("http://192.168.43.109/HelloWorldTest/TestController.php?functionName=getLoginFromDatabase"));
         StatusLine statusLine = response.getStatusLine();
         if(statusLine.getStatusCode() == HttpStatus.SC_OK){
             ByteArrayOutputStream out = new ByteArrayOutputStream();
