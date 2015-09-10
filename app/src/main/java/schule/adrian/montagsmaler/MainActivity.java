@@ -1,5 +1,6 @@
 package schule.adrian.montagsmaler;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
@@ -19,30 +21,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-/*import android.app.Activity;
-import android.widget.Toast;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;*/
 
+import model.Lobby;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -95,7 +83,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }else{
             text.setText("Hello World");
         }
-
     }
 
     @Override
@@ -107,25 +94,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void requestTest(){
+    public void requestGetTest(){
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
-        HttpPost post = new HttpPost("http://192.168.43.109/HelloWorldTest/");
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("user", "Bob"));
+        CharSequence user = username.getText();
+        CharSequence pw = password.getText();
+
         try {
-            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            // writing error to Log
-            e.printStackTrace();
-        }
-        try {
-            response = httpclient.execute(new HttpGet("http://http://192.168.43.226/MontagsMalerService/validateUser.xml?Benutzername=admin&Passwort=test"));
+            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
+                                                    "format=json&method=validateUser&Benutzername=" +
+                                                    user +
+                                                    "&Passwort=" +
+                                                    pw));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //   response = httpclient.execute(new HttpGet("http://192.168.43.109/HelloWorldTest/TestController.php?functionName=getLoginFromDatabase"));
+
         StatusLine statusLine = response.getStatusLine();
         if(statusLine.getStatusCode() == HttpStatus.SC_OK){
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -140,8 +125,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //..more logic
-            button1.setText(responseString);
+
+            try {
+                JSONObject jsonObject = new JSONObject(responseString);
+                String jsonResponse = jsonObject.getString("code");
+                //button1.setText(jsonResponse);
+                if (jsonResponse.equals("1")) {
+
+                    Intent profileIntent = new Intent(this, LobbyTestActivity.class);
+                    startActivity(profileIntent);
+
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         } else{
             //Closes the connection.
             try {
@@ -155,7 +152,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 e.printStackTrace();
             }
         }
+    }
 
+    public void requestPostTest() {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpResponse response = null;
+
+        String user = username.getText().toString();
+        String pass = password.getText().toString();
+        String format = "json";
+        String method = "validateUser";
+
+        HttpPost post = new HttpPost("http://192.168.43.226/MontagsMalerService/index.php");
+        //HttpPost post = new HttpPost("http://postcatcher.in/catchers/55f160782dea750300000518");
+
+        List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+        params.add(new BasicNameValuePair("user", user));
+        params.add(new BasicNameValuePair("pass", pass));
+        params.add(new BasicNameValuePair("format", format));
+        params.add(new BasicNameValuePair("method", method));
+
+
+        try {
+            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            // writing error to Log
+            e.printStackTrace();
+        }
+
+        try {
+            response = httpClient.execute(post);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null) {
+                //InputStream instream = entity.getContent();
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                try {
+                    entity.writeTo(out);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                String responseString = out.toString();
+                button1.setText(responseString);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     Thread thread = new Thread(new Runnable(){
@@ -163,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             try {
                 //Your code goes here
-                requestTest();
+                requestGetTest();
             } catch (Exception e) {
                 e.printStackTrace();
             }
