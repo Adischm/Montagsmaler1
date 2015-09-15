@@ -155,8 +155,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //HttpPost post = new HttpPost("http://postcatcher.in/catchers/55f160782dea750300000518");
 
         List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("user", user));
-        params.add(new BasicNameValuePair("pass", pass));
+        params.add(new BasicNameValuePair("Benutzername", user));
+        params.add(new BasicNameValuePair("Passwort", pass));
         params.add(new BasicNameValuePair("format", format));
         params.add(new BasicNameValuePair("method", method));
 
@@ -203,7 +203,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             try {
                 //Your code goes here
-                requestGetTest();
+                //requestGetTest();
+                requestPostTest();
             } catch (Exception e) {
                 e.printStackTrace();
             }
