@@ -5,29 +5,33 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
 
-    <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/text1" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Text ändern"
-        android:id="@+id/button1"
+        android:text="Login"
+        android:id="@+id/button_log"
         android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/text1"
-        android:layout_toEndOf="@+id/text1"
+        android:layout_marginLeft="70dp"
         android:onClick="@string/action_settings" />
+
+    <Button
+        android:layout_marginRight="70dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Registrieren"
+        android:id="@+id/button_reg"
+        android:layout_below="@+id/username"
+        android:layout_toRightOf="@id/button_log"/>
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:inputType="textPersonName"
-        android:text="Name"
+        android:text="Username"
         android:ems="10"
         android:id="@+id/username"
-        android:layout_above="@+id/button1"
-        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/button_log"
+        android:layout_marginLeft="70dp"
         android:layout_marginBottom="57dp" />
 
     <EditText
@@ -36,7 +40,8 @@
         android:inputType="textPassword"
         android:ems="10"
         android:id="@+id/password"
-        android:layout_above="@+id/button1"
-        android:layout_centerHorizontal="true" />
+        android:layout_above="@+id/button_log"
+        android:layout_marginLeft="70dp" />
+
 
 </RelativeLayout>

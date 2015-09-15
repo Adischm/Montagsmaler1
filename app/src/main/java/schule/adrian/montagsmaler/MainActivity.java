@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -23,31 +22,29 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.Lobby;
-
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
 
-    public Button button1;
-    public TextView text1;
-    public TextView username;
-    public TextView password;
+    public Button button_log;
+    public Button button_reg;
+    public TextView textview_user;
+    public TextView textview_pass;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        text1 = (TextView) findViewById(R.id.text1);
-        button1 = (Button) findViewById(R.id.button1);
-        username = (TextView) findViewById(R.id.username);
-        password = (TextView) findViewById(R.id.password);
-        button1.setOnClickListener(this);
+        button_log = (Button) findViewById(R.id.button_log);
+        button_reg = (Button) findViewById(R.id.button_reg);
+        textview_user = (TextView) findViewById(R.id.username);
+        textview_pass = (TextView) findViewById(R.id.password);
+        button_log.setOnClickListener(this);
+        button_reg.setOnClickListener(this);
 
         //Verhindert, dass der Internetzugriff über einen eigenen Thread laufen muss. Ggf Auslagerung in eigenen Thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -77,20 +74,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
-    public void switchText(TextView text){
-        if(text.getText().equals("Hello World")){
-            text.setText("Bye World");
-        }else{
-            text.setText("Hello World");
-        }
-    }
-
     @Override
     public void onClick(View v) {
-        if(v == button1){
-           // switchText(text1);
-           // requestTest();
-            thread.run();
+        if(v == button_log){
+            thread_login.run();
+        }else if(v == button_reg){
+            thread_register.run();
         }
     }
 
@@ -98,8 +87,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
 
-        CharSequence user = username.getText();
-        CharSequence pw = password.getText();
+        CharSequence user = textview_user.getText();
+        CharSequence pw = textview_pass.getText();
 
         try {
             response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
@@ -129,13 +118,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             try {
                 JSONObject jsonObject = new JSONObject(responseString);
                 String jsonResponse = jsonObject.getString("code");
-                //button1.setText(jsonResponse);
-                if (jsonResponse.equals("1")) {
+                button_log.setText(jsonResponse);
+                /*if (jsonResponse.equals("1")) {
 
-                    Intent profileIntent = new Intent(this, LobbyTestActivity.class);
-                    startActivity(profileIntent);
+                    goToActivity_Lobby();
 
-                }
+                }*/
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -158,8 +146,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse response = null;
 
-        String user = username.getText().toString();
-        String pass = password.getText().toString();
+        String user = textview_user.getText().toString();
+        String pass = textview_pass.getText().toString();
         String format = "json";
         String method = "validateUser";
 
@@ -193,19 +181,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     e.printStackTrace();
                 }
                 String responseString = out.toString();
-                button1.setText(responseString);
+                button_log.setText(responseString);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    Thread thread = new Thread(new Runnable(){
+    public void goToActivity_Register(){
+        Intent profileIntent = new Intent(this, RegisterActivity.class);
+        startActivity(profileIntent);
+    }
+
+    public void goToActivity_Lobby(){
+        Intent profileIntent = new Intent(this, LobbyTestActivity.class);
+        startActivity(profileIntent);
+    }
+
+    Thread thread_login = new Thread(new Runnable(){
         @Override
         public void run() {
             try {
                 //Your code goes here
                 requestGetTest();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+
+    Thread thread_register = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                //Your code goes here
+                goToActivity_Register();
             } catch (Exception e) {
                 e.printStackTrace();
             }
