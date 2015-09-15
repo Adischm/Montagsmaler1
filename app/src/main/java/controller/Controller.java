@@ -37,4 +37,8 @@ public class Controller {
         return lobbyList;
     }
 
+    public void testIt() {
+
+    }
+
 }
