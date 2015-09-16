@@ -184,6 +184,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 String responseString = out.toString();
                 button_log.setText(responseString);
+
+                try {
+                    JSONObject jsonObject = new JSONObject(responseString);
+                    String jsonResponse = jsonObject.getString("code");
+                    button_log.setText(jsonResponse);
+                    if (jsonResponse.equals("1")) {
+
+                        goToActivity_Lobby();
+
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
