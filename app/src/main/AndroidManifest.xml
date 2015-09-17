@@ -48,6 +48,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="schule.adrian.montagsmaler.MainActivity" />
         </activity>
+        <activity
+            android:name=".DrawActivity"
+            android:label="@string/title_activity_draw" >
+        </activity>
     </application>
 
 </manifest>

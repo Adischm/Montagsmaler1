@@ -191,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     button_log.setText(jsonResponse);
                     if (jsonResponse.equals("1")) {
 
-                        goToActivity_Lobby();
+                        goToActivity_Draw();
 
                     }
                 } catch (JSONException e) {
@@ -210,6 +210,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void goToActivity_Lobby(){
         Intent profileIntent = new Intent(this, LobbyTestActivity.class);
+        startActivity(profileIntent);
+    }
+
+    public void goToActivity_Draw(){
+        Intent profileIntent = new Intent(this, DrawActivity.class);
         startActivity(profileIntent);
     }
 
