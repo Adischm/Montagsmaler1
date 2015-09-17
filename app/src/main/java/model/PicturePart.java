@@ -7,12 +7,14 @@ public class PicturePart {
     private float x;
     private float y;
     private int event;
+    private int id;
 
-    public PicturePart(float x, float y, int event) {
+    public PicturePart(float x, float y, int event, int id) {
 
         this.x = x;
         this.y = y;
         this.event = event;
+        this.id = id;
 
         Controller.getInstance().getpParts().add(this);
     }
@@ -39,5 +41,13 @@ public class PicturePart {
 
     public void setEvent(int event) {
         this.event = event;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }

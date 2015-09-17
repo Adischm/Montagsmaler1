@@ -139,7 +139,11 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
                 int event = Controller.getInstance().getpParts().get(i).getEvent();
 
                 drawView.paintPicture(x, y, event);
+
+                Controller.getInstance().setLastPP(Controller.getInstance().getpParts().get(i).getId());
             }
+
+
         }
     }
 }

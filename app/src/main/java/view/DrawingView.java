@@ -113,6 +113,12 @@ public class DrawingView extends View {
             case MotionEvent.ACTION_UP:
                 drawCanvas.drawPath(drawPath, drawPaint);
                 drawPath.reset();
+
+                event_dif = 2;
+                drawID++;
+
+                postXY(0, 0, event_dif, drawID);
+
                 break;
             default:
                 return false;
@@ -133,14 +139,17 @@ public class DrawingView extends View {
                 drawPath.lineTo(x, y);
                 break;
 
-//            case MotionEvent.ACTION_UP:
-//                drawCanvas.drawPath(drawPath, drawPaint);
-//                drawPath.reset();
-//                break;
+            case 2:
+                drawCanvas.drawPath(drawPath, drawPaint);
+                drawPath.reset();
+                break;
+
             default:
 
         }
 
+//        drawCanvas.drawPath(drawPath, drawPaint);
+//        drawPath.reset();
         invalidate();
     }
 
@@ -179,8 +188,8 @@ public class DrawingView extends View {
 
         try {
             response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
-                    "format=json&method=drawTest&x=" +
-                    x + "&y=" + y + "&aktivitaet=" + event_dif + "&id=" + drawID));
+                    "format=json&method=drawPoint&x=" +
+                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
         } catch (IOException e) {
             e.printStackTrace();
         }

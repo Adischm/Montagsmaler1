@@ -30,6 +30,7 @@ public class Controller {
     }
 
     private ArrayList<PicturePart> pParts;
+    private int lastPP = 0;
 
     public Controller(){
 
@@ -57,12 +58,14 @@ public class Controller {
 
     public void getPictureParts() {
 
+        pParts.clear();
+
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
 
         try {
             response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
-                    "format=json&method=getDrawPoints"));
+                    "format=json&method=getDrawPoints&minId=" + lastPP));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +94,7 @@ public class Controller {
                     JSONArray jaa = ja.getJSONArray(i);
 
                     PicturePart pP = new PicturePart(Float.parseFloat(jaa.getString(0)), Float.parseFloat(jaa.getString(1)),
-                            Integer.parseInt(jaa.getString(2)));
+                            Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)));
                 }
 
             } catch (JSONException e) {
@@ -110,5 +113,13 @@ public class Controller {
 
     public void setpParts(ArrayList<PicturePart> pParts) {
         this.pParts = pParts;
+    }
+
+    public int getLastPP() {
+        return lastPP;
+    }
+
+    public void setLastPP(int lastPP) {
+        this.lastPP = lastPP;
     }
 }
