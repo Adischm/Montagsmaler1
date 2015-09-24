@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void requestGetTest(){
+
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
 
