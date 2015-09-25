@@ -5,21 +5,21 @@ import java.util.ArrayList;
 
 public class Lobby {
 
-    private int id;
+    private String id;
     private String name;
-    private ArrayList<Integer> users;
+    private ArrayList<String> users;
 
-    public Lobby(int id, String name, ArrayList<Integer> users) {
+    public Lobby(String id, String name, ArrayList<String> users) {
         this.id = id;
         this.name = name;
         this.users = users;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -31,11 +31,11 @@ public class Lobby {
         this.name = name;
     }
 
-    public ArrayList<Integer> getUsers() {
+    public ArrayList<String> getUsers() {
         return users;
     }
 
-    public void setUsers(ArrayList<Integer> users) {
+    public void setUsers(ArrayList<String> users) {
         this.users = users;
     }
 }

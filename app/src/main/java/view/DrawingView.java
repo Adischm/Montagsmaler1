@@ -150,7 +150,7 @@ public class DrawingView extends View {
 
 //        drawCanvas.drawPath(drawPath, drawPaint);
 //        drawPath.reset();
-        invalidate();
+        //invalidate();
     }
 
     public void setColor(String newColor){
@@ -177,6 +177,8 @@ public class DrawingView extends View {
     }
 
     public void deletePainting() {
+        drawID++;
+        postXY(0, 0, 3, drawID);
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
     }
@@ -235,4 +237,6 @@ public class DrawingView extends View {
             }
         }
     }
+
+
 }

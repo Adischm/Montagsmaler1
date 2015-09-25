@@ -17,4 +17,6 @@
     <string name="sml">Small</string>
     <string name="med">Medium</string>
     <string name="lrg">Large</string>
+    <string name="title_activity_lobby_detail">LobbyDetailActivity</string>
+    <string name="title_activity_watch">WatchActivity</string>
 </resources>
