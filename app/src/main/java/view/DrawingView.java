@@ -189,7 +189,10 @@ public class DrawingView extends View {
         HttpResponse response = null;
 
         try {
-            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
+//            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
+//                    "format=json&method=drawPoint&x=" +
+//                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
+            response = httpclient.execute(new HttpGet("http://192.168.178.25/MontagsMalerService/index.php?" +
                     "format=json&method=drawPoint&x=" +
                     x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
         } catch (IOException e) {

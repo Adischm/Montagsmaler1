@@ -81,7 +81,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void registerAccount(){
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse response = null;
-        HttpPost post = new HttpPost("http://192.168.43.226/MontagsMalerService/index.php");
+        //HttpPost post = new HttpPost("http://192.168.43.226/MontagsMalerService/index.php");
+        HttpPost post = new HttpPost("http://192.168.178.25/MontagsMalerService/index.php");
 
         String user = editText_username.getText().toString();
         String userDisplayname = user;

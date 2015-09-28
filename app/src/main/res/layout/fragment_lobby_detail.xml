@@ -10,17 +10,42 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Lobby Details"
-        android:id="@+id/textViewDetail"
+        android:text=""
+        android:id="@+id/lobbyDetailName"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
     <ListView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="300dp"
         android:id="@+id/listViewDetail"
-        android:layout_below="@+id/textView"
+        android:layout_below="@+id/lobbyDetailName"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="44dp" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Join"
+        android:id="@+id/btn_lobbydetail_join"
+        android:layout_below="@+id/listViewDetail"
+        android:layout_alignRight="@+id/listViewDetail"
+        android:layout_alignEnd="@+id/listViewDetail" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Leave"
+        android:id="@+id/btn_lobbydetail_leave"
+        android:layout_below="@+id/listViewDetail"
+        android:layout_toLeftOf="@id/btn_lobbydetail_join" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Start"
+        android:id="@+id/btn_lobbydetail_start"
+        android:layout_below="@+id/listViewDetail"
+        android:layout_toLeftOf="@id/btn_lobbydetail_leave" />
 
 </RelativeLayout>
