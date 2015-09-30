@@ -22,6 +22,8 @@ public class User {
     private String name;
     private String currentLobbyId;
     private int isLobbyOwner;
+    private int isPainter;
+    private int gameActive;
     //--- Ende Attribute ---
 
     //Konstruktor
@@ -34,6 +36,8 @@ public class User {
         this.name = name;
         this.currentLobbyId = currentLobbyId;
         this.isLobbyOwner = isLobbyOwner;
+        this.isPainter = 0;
+        this.gameActive = 0;
     }
 
     //Getter & Setter

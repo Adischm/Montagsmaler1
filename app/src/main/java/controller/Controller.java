@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import Data.Data;
+import model.Game;
 import model.Lobby;
 import model.PicturePart;
 import model.User;
@@ -26,12 +27,11 @@ import model.User;
  */
 public class Controller {
 
-    private static Controller instance = new Controller();
-
     /**
      * Singleton Pattern: Stellt sicher, dass nur eine Instanz von MainController existiert
-     * @return
      */
+    private static Controller instance = new Controller();
+
     public static Controller getInstance() {
         if (instance == null) {
             instance = new Controller();
@@ -46,6 +46,7 @@ public class Controller {
     private int lastPP = 0;
     private String activeLobby = "";
     private User user;
+    private Game game;
     private int wait = 0;
     private HttpClient httpclient;
     //--- Ende Attribute ---
@@ -84,6 +85,27 @@ public class Controller {
     public void getPictureParts() {
 
         new GetPicturePartsTask().execute();
+    }
+
+    /**
+     *
+     */
+    public void createGame(String lobbyId) {
+
+        game = new Game();
+        game.setLobbyId(lobbyId);
+
+        //Game in DB erzeugen und gameID zurück bekommen
+
+        //Dann mit LobbyId die User abfragen und einen davon als Painter festlegen
+
+        //Begriff holen --> geht das alles mit einem Get??
+
+        //View öffnen, abhängig davon, ob Painter oder nicht
+
+
+        //Per flag in die Auto-Schleife aufnehmen?
+
     }
 
     /**
@@ -341,6 +363,72 @@ public class Controller {
             }
 
             return null;
+        }
+
+        /**
+         *
+         */
+        private class AutoRefreshData extends AsyncTask<Void, Void, Void> {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                //Autoschleife mit allen Update-Abfragen (User, Game, Lobby...?)
+
+
+                //HttpResponse
+                HttpResponse response = null;
+
+                /*//Execute-String
+                String urlgetDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getDrawPoints&minId=" + lastPP;
+
+                //Führt die GetFunktion aus
+                try {
+                    response = httpclient.execute(new HttpGet(urlgetDrawPoints));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                StatusLine statusLine = response.getStatusLine();
+
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                    try {
+                        response.getEntity().writeTo(out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    String responseString = out.toString();
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseString);
+                        JSONArray ja = jsonObject.getJSONArray("data");
+
+                        //Aus dem Data-Array werden PicturePart-Objekte erzeugt. Diese fügen sich selbst der Koordinaten-Liste hinzu
+                        for (int i = 0; i < ja.length(); i++) {
+                            JSONArray jaa = ja.getJSONArray(i);
+
+                            PicturePart pP = new PicturePart(Float.parseFloat(jaa.getString(0)), Float.parseFloat(jaa.getString(1)),
+                                    Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }*/
+
+                return null;
+            }
         }
     }
 

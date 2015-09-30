@@ -196,6 +196,11 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         //Button "Join"
         if(v.getId()==R.id.btn_lobbydetail_join) {
 
+            //Sind keine anderen User in der Lobby, dann wird der Joiner zum Owner
+            if (userNames.size() == 0) {
+                Controller.getInstance().getUser().setIsLobbyOwner(1);
+            }
+
             //Fügt den User per AsyncTask der Lobby hinzu
             new JoinUserTask().execute();
 
@@ -203,19 +208,37 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             button_join.setEnabled(false);
             button_leave.setEnabled(true);
 
+            //Handelt es sich beim User um den Lobby-Owner, dann wird der Start-Button sichtbar
+            if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
+                button_start.setEnabled(true);
+                button_start.setVisibility(View.VISIBLE);
+            } else {
+                button_start.setEnabled(false);
+                button_start.setVisibility(View.INVISIBLE);
+            }
+
+
         //Button "Leave"
         } else if(v.getId()==R.id.btn_lobbydetail_leave) {
+
+            //Löscht die LobbyId aus dem User-Objekt
+            Controller.getInstance().getUser().setCurrentLobbyId("");
 
             //Prüft, ob der User, der die Lobby verlassen will, der Owner ist
             if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
 
-                //Falls ja, dann wird geprüft, ob noch mehr User in der Lobby sind
+                //Falls ja, dann wird die OwnerInfo an den Controller übergeben
+                Controller.getInstance().getUser().setIsLobbyOwner(0);
+
+                //Prüft ob weitere User in der Lobby sind
                 if (userNames.size() > 1) {
 
                     //Falls ja, dann wird der erste andere User zum Owner (per AsyncTask)
                     for (int i = 0; i < userNames.size(); i++) {
                         if (!userNames.get(i).equals(Controller.getInstance().getUser().getName()) && !userNames.get(i).contains("(Owner)")) {
                             new SetOwnerTask().execute(userNames.get(i));
+
+                            //Unterbricht die Schleife
                             break;
                         }
                     }
@@ -228,6 +251,28 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             //Setzt die Buttons
             button_join.setEnabled(true);
             button_leave.setEnabled(false);
+            button_start.setEnabled(false);
+            button_start.setVisibility(View.INVISIBLE);
+
+        //Button "Start"
+        } else if(v.getId()==R.id.btn_lobbydetail_start) {
+
+            //Dialog "Bitte warten" ?
+
+            //Game im Controller erstellen (Mind. 2 Spieler!!)
+
+            //Per Wait-Flag den Dialog schließen und die passende View öffnen
+        }
+    }
+
+    public void checkStartButton() {
+
+        //Handelt es sich beim User um den Lobby-Owner, dann wird der Start-Button sichtbar
+        if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
+            button_start.setEnabled(true);
+        } else {
+            button_start.setEnabled(false);
+            button_start.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -248,6 +293,9 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             } else {
                 urlSetUserToLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=setUserToLobby&LobbyId="
                         + lobbyId + "&UserId=" + Controller.getInstance().getUser().getId() + "&Owner=1";
+
+                //Übergibt LobbyOwner Info an Controller
+                Controller.getInstance().getUser().setIsLobbyOwner(1);
             }
 
             //Führt die GetFunktion aus
