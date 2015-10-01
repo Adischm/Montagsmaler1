@@ -50,6 +50,7 @@ public class Controller {
     private User user;
     private Game game;
     private int wait = 0;
+    private int pictureWait = 0;
     private HttpClient httpclient;
 
     private int refreshUser = 0;
@@ -385,6 +386,7 @@ public class Controller {
                 }
             }
 
+            pictureWait = 0;
             return null;
         }
     }
@@ -605,5 +607,13 @@ public class Controller {
 
     public void setLobbyList(ArrayList<Lobby> lobbyList) {
         this.lobbyList = lobbyList;
+    }
+
+    public int getPictureWait() {
+        return pictureWait;
+    }
+
+    public void setPictureWait(int pictureWait) {
+        this.pictureWait = pictureWait;
     }
 }

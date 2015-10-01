@@ -30,6 +30,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         editText_solvingWord = (EditText) findViewById(R.id.editText_solvingWord);
         button_Guess = (Button) findViewById(R.id.button_Guess);
 
+        Timer timer = new Timer();
 
         timer.schedule(new TimerTask() {
             @Override
@@ -41,7 +42,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                     }
                 });
             }
-        }, 500, 500);
+        }, 500, 100);
     }
 
     @Override
@@ -74,10 +75,12 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    Timer timer = new Timer();
-
     public void watchPainting(){
+
+        Controller.getInstance().setPictureWait(1);
         Controller.getInstance().getPictureParts();
+
+        while (Controller.getInstance().getPictureWait() == 1) {};
 
         for (int i = 0; i < Controller.getInstance().getpParts().size(); i++) {
 

@@ -85,7 +85,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         HttpPost post = new HttpPost("http://192.168.178.25/MontagsMalerService/index.php");
 
         String user = editText_username.getText().toString();
-        String userDisplayname = user;
         String pass = editText_password.getText().toString();
         String passRepeat = editText_password_repeat.getText().toString();
         String mail = "test@mail.com";
@@ -96,7 +95,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             textView_inputFailed.setText("Die Passwörter stimmen nicht überein!");
         }else{
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-            params.add(new BasicNameValuePair("AnzeigeName", userDisplayname));
             params.add(new BasicNameValuePair("LoginName", user));
             params.add(new BasicNameValuePair("LoginEmail", mail));
             params.add(new BasicNameValuePair("LoginPasswort", pass));

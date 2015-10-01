@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -191,8 +192,12 @@ public class DrawingView extends View {
 
     public void postXY(float x, float y, int event_dif, int drawID) {
 
+        Log.i("FU", "Vorher: " + (String.valueOf(x)));
+
         x = x/Controller.getInstance().getUser().getScreenWidth();
         y = y/Controller.getInstance().getUser().getScreenWidth();
+
+        Log.i("FU", "Nachher: " + (String.valueOf(x)));
 
         //Execute-String
         String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
