@@ -24,6 +24,8 @@ public class User {
     private int isLobbyOwner;
     private int isPainter;
     private int gameActive;
+
+    private int screenWidth;
     //--- Ende Attribute ---
 
     //Konstruktor
@@ -71,5 +73,29 @@ public class User {
 
     public void setIsLobbyOwner(int isLobbyOwner) {
         this.isLobbyOwner = isLobbyOwner;
+    }
+
+    public int getIsPainter() {
+        return isPainter;
+    }
+
+    public void setIsPainter(int isPainter) {
+        this.isPainter = isPainter;
+    }
+
+    public int getGameActive() {
+        return gameActive;
+    }
+
+    public void setGameActive(int gameActive) {
+        this.gameActive = gameActive;
+    }
+
+    public int getScreenWidth() {
+        return screenWidth;
+    }
+
+    public void setScreenWidth(int screenWidth) {
+        this.screenWidth = screenWidth;
     }
 }

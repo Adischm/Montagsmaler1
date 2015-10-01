@@ -1,5 +1,6 @@
 package schule.adrian.montagsmaler;
 
+import android.app.Dialog;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -98,18 +99,30 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         if (Controller.getInstance().getUser().getCurrentLobbyId().equals(lobbyId)) {
             button_join.setEnabled(false);
             button_leave.setEnabled(true);
+
+            //Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
+            if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
+                button_start.setEnabled(true);
+            } else {
+                button_start.setEnabled(false);
+                button_start.setVisibility(View.INVISIBLE);
+            }
+
         } else {
             button_join.setEnabled(true);
             button_leave.setEnabled(false);
+            button_start.setEnabled(false);
+            button_start.setVisibility(View.INVISIBLE);
         }
 
-        //Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
+        //TODO StartButton Abfrage schon oben?
+        /*//Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
         if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
             button_start.setEnabled(true);
         } else {
             button_start.setEnabled(false);
             button_start.setVisibility(View.INVISIBLE);
-        }
+        }*/
 
         //Instanziert einen Timer
         Timer timer = new Timer();
@@ -158,10 +171,27 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
                         Controller.getInstance().getLobbys();
                     }
                 });
+
+                if (Controller.getInstance().getUser().getGameActive() == 2) {
+
+                    showStartDialog();
+                }
             }
 
-        //Intervall (initiale Pause, Pause zwishcne den Durchläufen
+        //Intervall (initiale Pause, Pause zwischne den Durchläufen
         }, 2000, 2000);
+    }
+
+    public void showStartDialog() {
+
+        //Erzeugt einen "Bitte warten" Dialog
+        final Dialog gameStartsDialog = new Dialog(this);
+
+        //Ordnet dem Dialog ein Layout zu
+        gameStartsDialog.setContentView(R.layout.gamestart_waiter);
+
+        //Zeigt den Dialog an
+        gameStartsDialog.show();
     }
 
 

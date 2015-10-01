@@ -1,33 +1,24 @@
 package view;
 
-import android.graphics.Color;
-import android.view.View;
 import android.content.Context;
-import android.util.AttributeSet;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.view.MotionEvent;
-
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.util.TypedValue;
+import android.os.AsyncTask;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.view.View;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import schule.adrian.montagsmaler.R;
+import Data.Data;
+import controller.Controller;
 
 
 public class DrawingView extends View {
@@ -48,21 +39,22 @@ public class DrawingView extends View {
     private int event_dif = 0;
     private int drawID = 0;
 
+    private HttpClient httpclient;
+
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
+        httpclient = new DefaultHttpClient();
         setupDrawing();
     }
 
 
     private void setupDrawing(){
 
-        brushSize = getResources().getInteger(R.integer.medium_size);
-        lastBrushSize = brushSize;
+        brushSize = 10;
 
         //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
-        drawPaint.setColor(paintColor);
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(brushSize);
         drawPaint.setStyle(Paint.Style.STROKE);
@@ -153,46 +145,24 @@ public class DrawingView extends View {
         //invalidate();
     }
 
-    public void setColor(String newColor){
-        //set color
-        invalidate();
-        paintColor = Color.parseColor(newColor);
-        drawPaint.setColor(paintColor);
-    }
-
-    public void setBrushSize(float newSize){
-        //update size
-        float pixelAmount = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                newSize, getResources().getDisplayMetrics());
-        brushSize=pixelAmount;
-        drawPaint.setStrokeWidth(brushSize);
-    }
-
-    public void setLastBrushSize(float lastSize){
-        lastBrushSize=lastSize;
-    }
-
-    public float getLastBrushSize(){
-        return lastBrushSize;
-    }
-
     public void deletePainting() {
         drawID++;
         postXY(0, 0, 3, drawID);
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
     }
-
+/*
     public void postXY(float x, float y, int event_dif, int drawID) {
 
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
 
         try {
-//            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
-//                    "format=json&method=drawPoint&x=" +
-//                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
-            response = httpclient.execute(new HttpGet("http://192.168.178.25/MontagsMalerService/index.php?" +
+            //TODO Asynchroner Task & Umstellung der URL
+            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
+                    "format=json&method=drawPoint&x=" +
+                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
+        /*    response = httpclient.execute(new HttpGet("http://192.168.178.25/MontagsMalerService/index.php?" +
                     "format=json&method=drawPoint&x=" +
                     x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
         } catch (IOException e) {
@@ -201,31 +171,8 @@ public class DrawingView extends View {
 
         StatusLine statusLine = response.getStatusLine();
         if(statusLine.getStatusCode() == HttpStatus.SC_OK){
-            /*ByteArrayOutputStream out = new ByteArrayOutputStream();
-            try {
-                response.getEntity().writeTo(out);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            String responseString = out.toString();
-            try {
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
-            try {
-                JSONObject jsonObject = new JSONObject(responseString);
-                String jsonResponse = jsonObject.getString("code");
-                button_log.setText(jsonResponse);
-                *//*if (jsonResponse.equals("1")) {
 
-                    goToActivity_Lobby();
-
-                }*//*
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
         } else{
             //Closes the connection.
             try {
@@ -240,6 +187,37 @@ public class DrawingView extends View {
             }
         }
     }
+*/
 
+    public void postXY(float x, float y, int event_dif, int drawID) {
+
+        x = x/Controller.getInstance().getUser().getScreenWidth();
+        y = y/Controller.getInstance().getUser().getScreenWidth();
+
+        //Execute-String
+        String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
+                + "drawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID;
+
+        new DrawPointsTask().execute(urlDrawPoints);
+    }
+
+    /**
+     *
+     */
+    private class DrawPointsTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(strings[0]));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
 
 }

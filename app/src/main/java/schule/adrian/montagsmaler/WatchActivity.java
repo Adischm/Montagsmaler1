@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -11,15 +14,23 @@ import java.util.TimerTask;
 import controller.Controller;
 import view.WatchingView;
 
-public class WatchActivity extends AppCompatActivity{
+public class WatchActivity extends AppCompatActivity implements View.OnClickListener{
 
     private WatchingView watchView;
+    private EditText editText_solvingWord;
+    private Button button_Guess;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_watch);
-        watchView = (WatchingView)findViewById(R.id.watchView);
+        watchView = (WatchingView) findViewById(R.id.watchView);
+        watchView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
+        watchView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
+        editText_solvingWord = (EditText) findViewById(R.id.editText_solvingWord);
+        button_Guess = (Button) findViewById(R.id.button_Guess);
+
+
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -55,6 +66,14 @@ public class WatchActivity extends AppCompatActivity{
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onClick(View v) {
+        if(v == button_Guess){
+            String solvingWord = String.valueOf(editText_solvingWord.getText());
+            //TODO Senden des Lösungswortes
+        }
+    }
+
     Timer timer = new Timer();
 
     public void watchPainting(){
@@ -62,8 +81,8 @@ public class WatchActivity extends AppCompatActivity{
 
         for (int i = 0; i < Controller.getInstance().getpParts().size(); i++) {
 
-            float x = Controller.getInstance().getpParts().get(i).getX();
-            float y = Controller.getInstance().getpParts().get(i).getY();
+            float x = (Controller.getInstance().getpParts().get(i).getX() * Controller.getInstance().getUser().getScreenWidth());
+            float y = (Controller.getInstance().getpParts().get(i).getY() * Controller.getInstance().getUser().getScreenWidth());
             int event = Controller.getInstance().getpParts().get(i).getEvent();
 
             watchView.paintPicture(x, y, event);
@@ -71,6 +90,4 @@ public class WatchActivity extends AppCompatActivity{
             Controller.getInstance().setLastPP(Controller.getInstance().getpParts().get(i).getId());
         }
     }
-
-
 }

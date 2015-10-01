@@ -1,14 +1,18 @@
 package schule.adrian.montagsmaler;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.apache.http.HttpEntity;
@@ -37,8 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private HttpClient httpclient;
     private Button button_log;
     private Button button_reg;
-    private TextView textview_user;
-    private TextView textview_pass;
+    private EditText editText_username;
+    private EditText editText_password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +52,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         this.controller = Controller.getInstance();
         //thread_getLobbys.run();
 
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        WindowManager wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE); // the results will be higher than using the activity context object or the getWindowManager() shortcut
+        wm.getDefaultDisplay().getMetrics(displayMetrics);
+        controller.getUser().setScreenWidth(displayMetrics.widthPixels);
+
         this.httpclient = new DefaultHttpClient();
 
         this.button_log = (Button) findViewById(R.id.button_log);
         this.button_reg = (Button) findViewById(R.id.button_reg);
-        this.textview_user = (TextView) findViewById(R.id.username);
-        this.textview_pass = (TextView) findViewById(R.id.password);
+        this.editText_username = (EditText) findViewById(R.id.editText_username);
+        this.editText_password = (EditText) findViewById(R.id.editText_password);
         this.button_log.setOnClickListener(this);
         this.button_reg.setOnClickListener(this);
 
@@ -98,8 +107,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         HttpResponse response = null;
 
-        String user = textview_user.getText().toString();
-        String pass = textview_pass.getText().toString();
+        String user = editText_username.getText().toString();
+        String pass = editText_password.getText().toString();
         String format = "json";
         String method = "validateUser";
 
