@@ -12,9 +12,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Game startet, bitte warten!"
-        android:id="@+id/tv_lobbyerstellen"
+        android:text="Game starten?"
+        android:id="@+id/tv_gamestart"
         android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bereit"
+        android:id="@+id/btn_ready"
+        android:layout_below="@+id/tv_gamestart"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="40dp"
         android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

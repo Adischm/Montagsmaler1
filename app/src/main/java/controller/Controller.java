@@ -1,6 +1,7 @@
 package controller;
 
 import android.os.AsyncTask;
+import android.os.Handler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -15,8 +16,6 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import Data.Data;
 import model.Game;
@@ -52,8 +51,10 @@ public class Controller {
     private int wait = 0;
     private int pictureWait = 0;
     private HttpClient httpclient;
+    private Handler handler;
 
     private int refreshUser = 0;
+    private int refreshGame = 0;
     //--- Ende Attribute ---
 
     /**
@@ -66,19 +67,18 @@ public class Controller {
         this.httpclient = new DefaultHttpClient();
         this.lobbyList = new ArrayList<Lobby>();
 
-        //Instanziert einen Timer
-        Timer timer = new Timer();
-
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                new AutoRefreshDataTask().execute();
-            }
-
-            //Intervall (initiale Pause, Pause zwishcne den Durchläufen
-        }, 2000, 2000);
+        //Handler, der die Refresh-Runnable aufruft
+        handler = new Handler();
+        handler.postDelayed(refreshRunnable, 2000);
     }
+
+    private Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            new AutoRefreshDataTask().execute();
+            handler.postDelayed(this, 2000);
+        }
+    };
 
     /**
      * Holt Lobbys per AsyncTask aus der DB
@@ -435,9 +435,6 @@ public class Controller {
                     e.printStackTrace();
                 }
 
-                //data:
-                //["560cec0a7a1388.96822279","CompuGlobalHyperMegaNet",["55f9456eb029c0.75414538","83c8782a-56e0-11e5-9300-080027003c36"]]
-
                 //Erzeugt aus dem Antwort-String ein JSON-Objekt
                 try {
                     JSONObject jsonObject = new JSONObject(responseString);
@@ -556,6 +553,58 @@ public class Controller {
                 }
             }
 
+            if (refreshGame == 1) {
+
+                //HttpResponse
+                HttpResponse refreshGameResponse = null;
+
+                //Execute-String
+                String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetUserInformation&UserId=" + user.getId();
+
+                //Führt die GetFunktion aus
+                try {
+                    refreshGameResponse = httpclient.execute(new HttpGet(urlRefreshGame));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                StatusLine statusLine = refreshGameResponse.getStatusLine();
+
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                    try {
+                        refreshGameResponse.getEntity().writeTo(out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    String responseString = out.toString();
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseString);
+                        JSONArray ja = jsonObject.getJSONArray("data");
+
+                        user.setCurrentLobbyId((String) ja.get(0));
+                        user.setIsLobbyOwner((Integer) ja.get(1));
+                        user.setIsPainter((Integer) ja.get(2));
+                        user.setGameActive((Integer) ja.get(3));
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
             return null;
         }
     }
@@ -615,5 +664,13 @@ public class Controller {
 
     public void setPictureWait(int pictureWait) {
         this.pictureWait = pictureWait;
+    }
+
+    public Game getGame() {
+        return game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
     }
 }

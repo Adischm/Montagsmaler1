@@ -2,6 +2,7 @@ package schule.adrian.montagsmaler;
 
 import android.app.Dialog;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,11 +38,12 @@ import controller.Controller;
  */
 public class LobbyDetailActivity extends AppCompatActivity implements View.OnClickListener {
 
-    //--- Anfnag Attribute ---
+    //--- Anfang Attribute ---
     private String lobbyName;
     private String lobbyId;
 
     private HttpClient httpclient;
+    private Handler handler;
     private ListView detailListView;
 
     private Button button_join;
@@ -115,16 +117,11 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             button_start.setVisibility(View.INVISIBLE);
         }
 
-        //TODO StartButton Abfrage schon oben?
-        /*//Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
-        if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
-            button_start.setEnabled(true);
-        } else {
-            button_start.setEnabled(false);
-            button_start.setVisibility(View.INVISIBLE);
-        }*/
+        //Handler, der die Refresh-Runnable aufruft
+        handler = new Handler();
+        handler.postDelayed(refreshRunnable, 2000);
 
-        //Instanziert einen Timer
+        /*//Instanziert einen Timer
         Timer timer = new Timer();
 
         //Erzeugt einen TimerTask, der kontinuierlich die User der Lobby aus der DB holt
@@ -179,8 +176,54 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             }
 
         //Intervall (initiale Pause, Pause zwischne den Durchläufen
-        }, 2000, 2000);
+        }, 2000, 2000);*/
     }
+
+    private Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            //Instanziert eine Temp-Liste
+            ArrayList<String> al = new ArrayList<String>();
+
+            //Fügt der Liste die Namen der zugehörigen User hinzu
+            for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
+                if (Controller.getInstance().getLobbyList().get(i).getId().equals(Controller.getInstance().getActiveLobby())) {
+                    lobbyName = Controller.getInstance().getLobbyList().get(i).getName();
+                    lobbyId = Controller.getInstance().getLobbyList().get(i).getId();
+
+                    for (int j = 0; j < Controller.getInstance().getLobbyList().get(i).getUsers().size(); j++) {
+                        al.add(Controller.getInstance().getLobbyList().get(i).getUsers().get(j));
+                    }
+                }
+            }
+
+            //Ersetzt die User-Namen-Liste mit der neuen Liste
+            userNames = new ArrayList<String>(al);
+
+            //Falls 4 Spieler in der Lobby sind, dann wird der Join-Button deaktiviert
+            if (userNames.size() > 3) {
+                button_join.setEnabled(false);
+            }
+
+            //Leert den Adapter und lädt die neue Liste
+            lobbylistAdapter.clear();
+            lobbylistAdapter.addAll(userNames);
+
+            //Übergibt den Adapter erneut
+            detailListView.setAdapter(lobbylistAdapter);
+
+            //Startet den nächsten Task zum Abruf der Lobby-Daten
+            Controller.getInstance().getLobbys();
+
+            if (Controller.getInstance().getUser().getGameActive() == 2) {
+
+                showStartDialog();
+            }
+
+            handler.postDelayed(this, 2000);
+        }
+    };
 
     public void showStartDialog() {
 
@@ -189,6 +232,26 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
         //Ordnet dem Dialog ein Layout zu
         gameStartsDialog.setContentView(R.layout.gamestart_waiter);
+
+        //Instanziert einen Button für den Dialog
+        Button smallBtn = (Button)gameStartsDialog.findViewById(R.id.btn_ready);
+
+        //Definiert einen Listener für den Button
+        smallBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Controller.getInstance().getUser().setIsReady(1);
+
+                //Setzt den "Bitte warten" Text
+                final TextView mTextView = (TextView) findViewById(R.id.tv_gamestart);
+                mTextView.setText("Bitte warten...");
+
+                new SetUserReadyTask().execute();
+
+            }
+        });
 
         //Zeigt den Dialog an
         gameStartsDialog.show();
@@ -383,6 +446,29 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             //Führt die GetFunktion aus
             try {
                 httpclient.execute(new HttpGet(urlSetOwner));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * Setzt für einen User per HttpGet das Ready-Flag
+     */
+    private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            //Execute-String
+            String urlSetReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                                + "&method=UpdateIsUserReady&State=1&UserId=" + Controller.getInstance().getUser().getId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetReady));
             } catch (IOException e) {
                 e.printStackTrace();
             }
