@@ -38,7 +38,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         @Override
         public void run() {
             watchPainting();
-            handler.postDelayed(this, 10);
+            handler.postDelayed(this, 100);
         }
     };
 
