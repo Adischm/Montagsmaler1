@@ -1,15 +1,13 @@
 package schule.adrian.montagsmaler;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 import controller.Controller;
 import view.WatchingView;
@@ -19,6 +17,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private WatchingView watchView;
     private EditText editText_solvingWord;
     private Button button_Guess;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,19 +29,20 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         editText_solvingWord = (EditText) findViewById(R.id.editText_solvingWord);
         button_Guess = (Button) findViewById(R.id.button_Guess);
 
-
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                watchView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        watchPainting();
-                    }
-                });
-            }
-        }, 500, 500);
+        //Handler, der die Refresh-Runnable aufruft
+        handler = new Handler();
+        handler.postDelayed(runnable, 500);
     }
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+
+            watchPainting();
+
+            handler.postDelayed(this, 10);
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -74,10 +74,14 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    Timer timer = new Timer();
 
     public void watchPainting(){
+        Controller.getInstance().setPictureWait(1);
         Controller.getInstance().getPictureParts();
+
+        while(Controller.getInstance().getPictureWait() == 1){
+
+        }
 
         for (int i = 0; i < Controller.getInstance().getpParts().size(); i++) {
 

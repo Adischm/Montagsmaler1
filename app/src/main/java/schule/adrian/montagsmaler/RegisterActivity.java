@@ -26,6 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import Data.Data;
+
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener{
 
     public EditText editText_username;
@@ -81,14 +83,11 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void registerAccount(){
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse response = null;
-        //HttpPost post = new HttpPost("http://192.168.43.226/MontagsMalerService/index.php");
-        HttpPost post = new HttpPost("http://192.168.178.25/MontagsMalerService/index.php");
+        HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
 
         String user = editText_username.getText().toString();
-        String userDisplayname = user;
         String pass = editText_password.getText().toString();
         String passRepeat = editText_password_repeat.getText().toString();
-        String mail = "test@mail.com";
         String format = "json";
         String method = "newAccount";
 
@@ -96,9 +95,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             textView_inputFailed.setText("Die Passwörter stimmen nicht überein!");
         }else{
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-            params.add(new BasicNameValuePair("AnzeigeName", userDisplayname));
             params.add(new BasicNameValuePair("LoginName", user));
-            params.add(new BasicNameValuePair("LoginEmail", mail));
             params.add(new BasicNameValuePair("LoginPasswort", pass));
             params.add(new BasicNameValuePair("format", format));
             params.add(new BasicNameValuePair("method", method));

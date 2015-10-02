@@ -27,14 +27,12 @@ public class DrawingView extends View {
     private Path drawPath;
     //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
-    //initial color
-    private int paintColor = 0xFF660000;
     //canvas
     private Canvas drawCanvas;
     //canvas bitmap
     private Bitmap canvasBitmap;
 
-    private float brushSize, lastBrushSize;
+    private float brushSize;
 
     private int event_dif = 0;
     private int drawID = 0;
@@ -50,7 +48,7 @@ public class DrawingView extends View {
 
     private void setupDrawing(){
 
-        brushSize = 10;
+        brushSize = (float) (Controller.getInstance().getUser().getScreenWidth()*0.01);
 
         //get drawing area setup for interaction
         drawPath = new Path();
@@ -120,74 +118,12 @@ public class DrawingView extends View {
         return true;
     }
 
-    public void paintPicture(float x, float y, int event) {
-
-        switch (event) {
-            case 0:
-                drawPath.moveTo(x, y);
-                break;
-
-            case 1:
-                drawPath.lineTo(x, y);
-                break;
-
-            case 2:
-                drawCanvas.drawPath(drawPath, drawPaint);
-                drawPath.reset();
-                break;
-
-            default:
-
-        }
-
-//        drawCanvas.drawPath(drawPath, drawPaint);
-//        drawPath.reset();
-        //invalidate();
-    }
-
     public void deletePainting() {
         drawID++;
         postXY(0, 0, 3, drawID);
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
     }
-/*
-    public void postXY(float x, float y, int event_dif, int drawID) {
-
-        HttpClient httpclient = new DefaultHttpClient();
-        HttpResponse response = null;
-
-        try {
-            //TODO Asynchroner Task & Umstellung der URL
-            response = httpclient.execute(new HttpGet("http://192.168.43.226/MontagsMalerService/index.php?" +
-                    "format=json&method=drawPoint&x=" +
-                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
-        /*    response = httpclient.execute(new HttpGet("http://192.168.178.25/MontagsMalerService/index.php?" +
-                    "format=json&method=drawPoint&x=" +
-                    x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        StatusLine statusLine = response.getStatusLine();
-        if(statusLine.getStatusCode() == HttpStatus.SC_OK){
-
-
-        } else{
-            //Closes the connection.
-            try {
-                response.getEntity().getContent().close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                throw new IOException(statusLine.getReasonPhrase());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-*/
 
     public void postXY(float x, float y, int event_dif, int drawID) {
 
@@ -201,9 +137,6 @@ public class DrawingView extends View {
         new DrawPointsTask().execute(urlDrawPoints);
     }
 
-    /**
-     *
-     */
     private class DrawPointsTask extends AsyncTask<String, Void, Void> {
 
         @Override

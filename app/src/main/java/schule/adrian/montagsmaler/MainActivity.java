@@ -6,14 +6,12 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -181,6 +179,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startActivity(profileIntent);
     }
 
+    public void goToActivity_Watch(){
+        Intent profileIntent = new Intent(this, WatchActivity.class);
+        startActivity(profileIntent);
+    }
+
     Thread thread_getLobbys = new Thread(new Runnable(){
         @Override
         public void run() {
@@ -208,8 +211,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void run() {
             try {
-                //Zum Testen direkt zu Draw
-                goToActivity_Draw();
+                //Zum Testen direkt zu..
+                goToActivity_Watch();
             } catch (Exception e) {
                 e.printStackTrace();
             }

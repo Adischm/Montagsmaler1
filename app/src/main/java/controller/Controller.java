@@ -1,6 +1,7 @@
 package controller;
 
 import android.os.AsyncTask;
+import android.os.Handler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -15,8 +16,6 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import Data.Data;
 import model.Game;
@@ -50,7 +49,9 @@ public class Controller {
     private User user;
     private Game game;
     private int wait = 0;
+    private int pictureWait = 0;
     private HttpClient httpclient;
+    private Handler handler;
 
     private int refreshUser = 0;
     //--- Ende Attribute ---
@@ -65,19 +66,20 @@ public class Controller {
         this.httpclient = new DefaultHttpClient();
         this.lobbyList = new ArrayList<Lobby>();
 
-        //Instanziert einen Timer
-        Timer timer = new Timer();
-
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                new AutoRefreshDataTask().execute();
-            }
-
-            //Intervall (initiale Pause, Pause zwishcne den Durchläufen
-        }, 2000, 2000);
+        //Handler, der die Refresh-Runnable aufruft
+        handler = new Handler();
+        handler.postDelayed(runnable, 2000);
     }
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+
+            new AutoRefreshDataTask().execute();
+
+            handler.postDelayed(this, 2000);
+        }
+    };
 
     /**
      * Holt Lobbys per AsyncTask aus der DB
@@ -385,6 +387,7 @@ public class Controller {
                 }
             }
 
+            pictureWait = 0;
             return null;
         }
     }
@@ -605,5 +608,13 @@ public class Controller {
 
     public void setLobbyList(ArrayList<Lobby> lobbyList) {
         this.lobbyList = lobbyList;
+    }
+
+    public int getPictureWait() {
+        return pictureWait;
+    }
+
+    public void setPictureWait(int pictureWait) {
+        this.pictureWait = pictureWait;
     }
 }
