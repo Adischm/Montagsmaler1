@@ -1,6 +1,7 @@
 package schule.adrian.montagsmaler;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -41,10 +42,13 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
     //--- Anfang Attribute ---
     private String lobbyName;
     private String lobbyId;
+    private int stopHandler;
 
     private HttpClient httpclient;
     private Handler handler;
     private ListView detailListView;
+    private Dialog gameStartsDialog;
+    private TextView mTextView;
 
     private Button button_join;
     private Button button_leave;
@@ -71,8 +75,12 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         this.button_leave.setOnClickListener(this);
         this.button_start = (Button)findViewById(R.id.btn_lobbydetail_start);
         this.button_start.setOnClickListener(this);
-        userNames = new ArrayList<String>();
-        tempUserNames = new ArrayList<String>();
+        this.userNames = new ArrayList<String>();
+        this.tempUserNames = new ArrayList<String>();
+        this.stopHandler = 0;
+
+        //Dialog, der beim GameStart angezeigt wird
+        this.gameStartsDialog = new Dialog(this);
 
         //Ruft die User der Lobby vom Controller ab und fügt sie der User-Namen-Liste hinzu
         for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
@@ -94,7 +102,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         detailListView.setAdapter(lobbylistAdapter);
 
         //Setzt den Lobbynamen als Text auf dem Screen
-        final TextView mTextView = (TextView) findViewById(R.id.lobbyDetailName);
+        mTextView = (TextView) findViewById(R.id.lobbyDetailName);
         mTextView.setText("Lobby: " + lobbyName);
 
         //Aktiviert Buttons, abhängig davon, ob der User bereits in der Lobby ist
@@ -213,22 +221,51 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             //Übergibt den Adapter erneut
             detailListView.setAdapter(lobbylistAdapter);
 
+            //TODO GetLobbys als AutoRefresh?
             //Startet den nächsten Task zum Abruf der Lobby-Daten
             Controller.getInstance().getLobbys();
 
-            if (Controller.getInstance().getUser().getGameActive() == 2) {
+            if (!gameStartsDialog.isShowing()) {
 
-                showStartDialog();
+                if (Controller.getInstance().getUser().getGameActive() == 2) {
+
+                    Controller.getInstance().setRefreshGame(1);
+
+                    showStartDialog();
+                }
             }
 
-            handler.postDelayed(this, 2000);
+            if (Controller.getInstance().getGame().getUsersReady() > 0) {
+
+                if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+
+                    if (Controller.getInstance().getUser().getIsPainter() == 1) {
+
+                        //Der Maler setzt für alle Spieler GameActive auf 1
+                        String[] array = {lobbyId, "1"};
+                        Controller.getInstance().setGameActive(array);
+
+                        //Der Maler wechselt in die Draw View
+                        thread_draw.run();
+                        stopHandler = 1;
+
+                    } else {
+
+                        //Der Rest wechselt in die Watch View
+                        thread_watch.run();
+                        stopHandler = 1;
+                    }
+                }
+            }
+
+            if (stopHandler == 0) {
+
+                handler.postDelayed(this, 2000);
+            }
         }
     };
 
     public void showStartDialog() {
-
-        //Erzeugt einen "Bitte warten" Dialog
-        final Dialog gameStartsDialog = new Dialog(this);
 
         //Ordnet dem Dialog ein Layout zu
         gameStartsDialog.setContentView(R.layout.gamestart_waiter);
@@ -245,7 +282,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
                 Controller.getInstance().getUser().setIsReady(1);
 
                 //Setzt den "Bitte warten" Text
-                final TextView mTextView = (TextView) findViewById(R.id.tv_gamestart);
+                final TextView mTextView = (TextView) gameStartsDialog.findViewById(R.id.tv_gamestart);
                 mTextView.setText("Bitte warten...");
 
                 new SetUserReadyTask().execute();
@@ -350,6 +387,9 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         //Button "Start"
         } else if(v.getId()==R.id.btn_lobbydetail_start) {
 
+            Controller.getInstance().createGame(lobbyId);
+
+
             //Dialog "Bitte warten" ?
 
             //Game im Controller erstellen (Mind. 2 Spieler!!)
@@ -358,6 +398,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
+    //TODO Kann raus?
     public void checkStartButton() {
 
         //Handelt es sich beim User um den Lobby-Owner, dann wird der Start-Button sichtbar
@@ -368,6 +409,38 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             button_start.setVisibility(View.INVISIBLE);
         }
     }
+
+    //Methoden zum Wechsel der Activity
+    public void goToActivity_Draw(){
+        Intent profileIntent = new Intent(this, DrawActivity.class);
+        startActivity(profileIntent);
+    }
+    public void goToActivity_Watch(){
+        Intent profileIntent = new Intent(this, WatchActivity.class);
+        startActivity(profileIntent);
+    }
+
+    //Threads für den Wechsel der Activity
+    Thread thread_draw = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Draw();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    Thread thread_watch = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Watch();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
 
     /**
      * Fügt einen User per HttpGet einer Lobby hinzu

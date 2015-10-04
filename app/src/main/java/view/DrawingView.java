@@ -128,16 +128,10 @@ public class DrawingView extends View {
         x = x/Controller.getInstance().getUser().getScreenWidth();
         y = y/Controller.getInstance().getUser().getScreenWidth();
 
-        /*//Execute-String
-        String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
-                                + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
-                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId();*/
-
-        //**TEST**
         //Execute-String
         String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
-                + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
-                + "&lobbyId=560866f1a95307.88353718";
+                                + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
+                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId();
 
         new DrawPointsTask().execute(urlDrawPoints);
     }

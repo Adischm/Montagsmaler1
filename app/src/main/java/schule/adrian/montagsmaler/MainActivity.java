@@ -209,7 +209,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void run() {
             try {
                 //Zum Testen direkt zu Draw
-                goToActivity_Draw();
+                //goToActivity_Draw();
+                goToActivity_Register();
             } catch (Exception e) {
                 e.printStackTrace();
             }

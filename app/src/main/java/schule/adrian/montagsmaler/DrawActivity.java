@@ -6,6 +6,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import controller.Controller;
 import view.DrawingView;
@@ -15,15 +16,21 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     private DrawingView drawView;
     private ImageButton button_erase;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draw);
-        drawView = (DrawingView)findViewById(R.id.drawing);
-        drawView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
-        drawView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
-        button_erase = (ImageButton)findViewById(R.id.erase_btn);
-        button_erase.setOnClickListener(this);
+
+        this.drawView = (DrawingView)findViewById(R.id.drawing);
+        this.drawView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
+        this.drawView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
+        this.button_erase = (ImageButton)findViewById(R.id.erase_btn);
+        this.button_erase.setOnClickListener(this);
+
+        //Setzt das Lösungswort als Text auf dem Screen
+        final TextView mTextView = (TextView) findViewById(R.id.textView_solvingWord);
+        mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
     }
 
     @Override

@@ -1,13 +1,16 @@
 package schule.adrian.montagsmaler;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import controller.Controller;
 import view.WatchingView;
@@ -18,19 +21,23 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private EditText editText_solvingWord;
     private Button button_Guess;
     private Handler handler;
+    private Dialog infoDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_watch);
-        watchView = (WatchingView) findViewById(R.id.watchView);
-        watchView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
-        watchView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
-        editText_solvingWord = (EditText) findViewById(R.id.editText_solvingWord);
-        button_Guess = (Button) findViewById(R.id.button_Guess);
+
+        this.watchView = (WatchingView) findViewById(R.id.watchView);
+        this.watchView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
+        this.watchView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
+        this.editText_solvingWord = (EditText) findViewById(R.id.editText_solvingWord);
+        this.button_Guess = (Button) findViewById(R.id.button_Guess);
+        this.button_Guess.setOnClickListener(this);
+        this.infoDialog = new Dialog(this);
 
         //Handler, der die Refresh-DrawPoints Runnable aufruft
-        handler = new Handler();
+        this.handler = new Handler();
         handler.postDelayed(refreshRunnable, 500);
     }
 
@@ -67,9 +74,57 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View v) {
         if(v == button_Guess){
-            String solvingWord = String.valueOf(editText_solvingWord.getText());
-            //TODO Senden des Lösungswortes
+            String solvingWord = editText_solvingWord.getText().toString().toLowerCase();
+
+            Log.i("FU", "Lösung: " + solvingWord);
+
+            if (solvingWord.equals(Controller.getInstance().getGame().getActiveWord())) {
+
+                showInfoDialog("Die Lösung ist richtig!" + System.getProperty ("line.separator") + "Du bist der nächste Maler", "OK", 1);
+
+            } else {
+
+                showInfoDialog("Die Lösung ist falsch!", "OK", 0);
+            }
+
         }
+    }
+
+    public void showInfoDialog(String text, String btnText, final int solution) {
+
+        //Ordnet dem Dialog ein Layout zu
+        infoDialog.setContentView(R.layout.watch_info_dialog);
+
+        final TextView infoTextView = (TextView)infoDialog.findViewById(R.id.tv_infotext);
+        infoTextView.setText(text);
+
+        //Instanziert einen Button für den Dialog
+        final Button smallBtn = (Button)infoDialog.findViewById(R.id.info_btn);
+        smallBtn.setText(btnText);
+
+        //Definiert einen Listener für den Button
+        smallBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                int decider = solution;
+
+                if (decider == 0) {
+                    infoDialog.dismiss();
+                } else if (decider == 1) {
+                    infoTextView.setText("Bereit für die nächste Runde?");
+                    smallBtn.setText("Bereit");
+                    decider = 2;
+                } else if (decider == 2){
+
+                }
+
+            }
+        });
+
+        //Zeigt den Dialog an
+        infoDialog.show();
     }
 
     public void watchPainting(){
