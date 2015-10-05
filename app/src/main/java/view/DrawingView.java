@@ -45,10 +45,9 @@ public class DrawingView extends View {
         setupDrawing();
     }
 
-
     private void setupDrawing(){
 
-        brushSize = (float) (Controller.getInstance().getUser().getScreenWidth()*0.01);
+        brushSize = (float) (Controller.getInstance().getUser().getScreenWidth() * 0.01);
 
         //get drawing area setup for interaction
         drawPath = new Path();
@@ -59,7 +58,6 @@ public class DrawingView extends View {
         drawPaint.setStrokeJoin(Paint.Join.ROUND);
         drawPaint.setStrokeCap(Paint.Cap.ROUND);
         canvasPaint = new Paint(Paint.DITHER_FLAG);
-
     }
 
     @Override
@@ -132,11 +130,15 @@ public class DrawingView extends View {
 
         //Execute-String
         String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
-                + "drawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID;
+                                + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
+                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId();
 
         new DrawPointsTask().execute(urlDrawPoints);
     }
 
+    /**
+     *
+     */
     private class DrawPointsTask extends AsyncTask<String, Void, Void> {
 
         @Override

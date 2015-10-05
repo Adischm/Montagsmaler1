@@ -23,6 +23,9 @@ public class Game {
     private String lobbyId;
     private String activeWord;
     private String painterId;
+    private String nextPainterId;
+    private int usersReady;
+    private int isSolved;
 
     private ArrayList<String> userIds;
 
@@ -37,6 +40,9 @@ public class Game {
         this.lobbyId = "";
         this.activeWord = "";
         this.painterId = "";
+        this.nextPainterId = "";
+        this.usersReady = 0;
+        this.isSolved = 0;
 
         this.userIds = new ArrayList<String>();
     }
@@ -73,11 +79,35 @@ public class Game {
         this.painterId = painterId;
     }
 
+    public String getNextPainterId() {
+        return nextPainterId;
+    }
+
+    public void setNextPainterId(String nextPainterId) {
+        this.nextPainterId = nextPainterId;
+    }
+
     public ArrayList<String> getUserIds() {
         return userIds;
     }
 
     public void setUserIds(ArrayList<String> userIds) {
         this.userIds = userIds;
+    }
+
+    public int getUsersReady() {
+        return usersReady;
+    }
+
+    public void setUsersReady(int usersReady) {
+        this.usersReady = usersReady;
+    }
+
+    public int getIsSolved() {
+        return isSolved;
+    }
+
+    public void setIsSolved(int isSolved) {
+        this.isSolved = isSolved;
     }
 }

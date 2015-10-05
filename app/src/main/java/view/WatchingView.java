@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import controller.Controller;
+import schule.adrian.montagsmaler.R;
 
 /**
  * Created by Adrian on 24.09.15.
@@ -33,10 +34,9 @@ public class WatchingView extends View {
         setupDrawing();
     }
 
-
     private void setupDrawing(){
 
-        brushSize = (float) (Controller.getInstance().getUser().getScreenWidth()*0.01);
+        brushSize = (float) (Controller.getInstance().getUser().getScreenWidth() * 0.01);
 
         //get drawing area setup for interaction
         drawPath = new Path();
@@ -86,7 +86,6 @@ public class WatchingView extends View {
                 break;
 
             default:
-
         }
 
         invalidate();

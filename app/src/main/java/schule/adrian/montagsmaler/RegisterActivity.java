@@ -2,6 +2,7 @@ package schule.adrian.montagsmaler;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -11,7 +12,9 @@ import android.widget.TextView;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -83,6 +86,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void registerAccount(){
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse response = null;
+
         HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
 
         String user = editText_username.getText().toString();
@@ -122,6 +126,9 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                     try {
                         JSONObject jsonObject = new JSONObject(responseString);
                         String jsonResponse = jsonObject.getString("data");
+
+                        Log.i("FU", "Response: " + jsonResponse);
+
                         textView_inputFailed.setText(jsonResponse);
                     } catch (JSONException e) {
                         e.printStackTrace();

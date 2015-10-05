@@ -54,6 +54,7 @@ public class Controller {
     private Handler handler;
 
     private int refreshUser = 0;
+    private int refreshGame = 0;
     //--- Ende Attribute ---
 
     /**
@@ -63,20 +64,19 @@ public class Controller {
 
         this.pParts = new ArrayList<PicturePart>();
         this.user = new User();
+        this.game = new Game();
         this.httpclient = new DefaultHttpClient();
         this.lobbyList = new ArrayList<Lobby>();
 
         //Handler, der die Refresh-Runnable aufruft
         handler = new Handler();
-        handler.postDelayed(runnable, 2000);
+        handler.postDelayed(refreshRunnable, 2000);
     }
 
-    private Runnable runnable = new Runnable() {
+    private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-
             new AutoRefreshDataTask().execute();
-
             handler.postDelayed(this, 2000);
         }
     };
@@ -111,23 +111,34 @@ public class Controller {
      */
     public void createGame(String lobbyId) {
 
-        game = new Game();
         game.setLobbyId(lobbyId);
 
         new CreateGameTask().execute(lobbyId);
-
-        //Game in DB erzeugen und gameID zurück bekommen
-
-        //Dann mit LobbyId die User abfragen und einen davon als Painter festlegen
-
-        //Begriff holen --> geht das alles mit einem Get??
-
-        //View öffnen, abhängig davon, ob Painter oder nicht
-
-
-        //Per flag in die Auto-Schleife aufnehmen?
-
     }
+
+    public void setGameActive(String[] array) {
+
+        new SetGameActiveTask().execute(array);
+    }
+
+    public void resetGame(String state) {
+
+        String[] array = {game.getLobbyId(), state};
+
+        new ResetGameTask().execute(array);
+    }
+
+    public void setResolved() {
+
+        new SetResolvedTask().execute(user.getId());
+    }
+
+    public void setUserReady() {
+
+        new SetUserReadyTask().execute();
+    }
+
+    //--- Anfang Tasks ---
 
     /**
      * Holt per HttpGet die Daten aller Lobbys inkl. der zugeordneten User aus der DB
@@ -406,7 +417,7 @@ public class Controller {
             HttpResponse createGameResponse = null;
 
             //Execute-String
-            String urlCreateGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=NewGameObject&LobbyId=" + lobbyId;
+            String urlCreateGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetGame&State=2&LobbyId=" + lobbyId;
 
             //Führt die GetFunktion aus
             try {
@@ -436,9 +447,6 @@ public class Controller {
                     e.printStackTrace();
                 }
 
-                //data:
-                //["560cec0a7a1388.96822279","CompuGlobalHyperMegaNet",["55f9456eb029c0.75414538","83c8782a-56e0-11e5-9300-080027003c36"]]
-
                 //Erzeugt aus dem Antwort-String ein JSON-Objekt
                 try {
                     JSONObject jsonObject = new JSONObject(responseString);
@@ -449,7 +457,7 @@ public class Controller {
                     game.setActiveWord((String) ja.get(1));
 
                     //Bildet ein inneres Array aus dem data-Array mit UserIds
-                    JSONArray jaa = ja.getJSONArray(ja.getInt(2));
+                    JSONArray jaa = ja.getJSONArray(2);
 
                     //Übergibt die UserIds an das Game-Objekt
                     for (int i = 0; i < jaa.length(); i++) {
@@ -467,28 +475,139 @@ public class Controller {
                         //Bei match mit der Zufallszahl: isPainter = 1 ...
                         if (i == randomInt) {
 
-                            //gameActive = 2, is Painter = 1
+                            //Prüft, ob der User der ausgewählte Maler ist
+                            if (game.getUserIds().get(i).equals(user.getId())) {
 
+                                //Setzt das isPainter flag des User-Objekts
+                                user.setIsPainter(1);
+                            }
+
+                            //Übergibt die MalerId an die Datenbank (gameobjects + user)
                             //Execute-String
-                            String urlSetUserData = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=NewGameObject&LobbyId=" + lobbyId;
+                            String urlSetPainter = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetPainter"
+                                                    + "&LobbyId=" + lobbyId + "&UserId=" + user.getId() + "&GameId=" + game.getId();
 
                             //Führt die GetFunktion aus
                             try {
-                                createGameResponse = httpclient.execute(new HttpGet(urlSetUserData));
+                                createGameResponse = httpclient.execute(new HttpGet(urlSetPainter));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-
-                        //Andernfalls: isPainter = 0
-                        } else {
-
-                            ////gameActive = 2, is Painter = 0
                         }
                     }
+
+                    refreshGame = 1;
 
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
+    private class SetGameActiveTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            String lobbyId = strings[0];
+            String state = strings[1];
+
+            //Execute-String
+            String urlSetGameActive = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetGameActive&State=" + state + "&LobbyId=" + lobbyId;
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetGameActive));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
+    private class ResetGameTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            String lobbyId = strings[0];
+            String state = strings[1];
+            String painter = "";
+
+            if (game.getNextPainterId().equals("")) {
+                painter = user.getId();
+            } else {
+                painter = game.getNextPainterId();
+            }
+
+            //Execute-String
+            String urlSetAllIsReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=ResetGameForNewRound"
+                                        + "&State=" + state + "&LobbyId=" + lobbyId + "&NextMaler=" + painter;
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetAllIsReady));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
+    private class SetResolvedTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            String nextPainter = strings[0];
+
+            //TODO Warum wird resolved nicht gesetzt?
+
+            //Execute-String
+            String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetResolved));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * Setzt für einen User per HttpGet das Ready-Flag
+     */
+    private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            //Execute-String
+            String urlSetReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                    + "&method=UpdateIsUserReady&State=1&UserId=" + user.getId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetReady));
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
             return null;
@@ -557,6 +676,73 @@ public class Controller {
                 }
             }
 
+            if (refreshGame == 1) {
+
+                //HttpResponse
+                HttpResponse refreshGameResponse = null;
+
+
+                //TODO
+                //Execute-String
+                String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetGameInformation&LobbyId=" + activeLobby;
+
+                //Führt die GetFunktion aus
+                try {
+                    refreshGameResponse = httpclient.execute(new HttpGet(urlRefreshGame));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                StatusLine statusLine = refreshGameResponse.getStatusLine();
+
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                    try {
+                        refreshGameResponse.getEntity().writeTo(out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    String responseString = out.toString();
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseString);
+                        JSONArray ja = jsonObject.getJSONArray("data");
+
+                        game.setId((String)ja.get(0));
+                        game.setPainterId((String) ja.get(1));
+                        game.setNextPainterId((String) ja.get(2));
+                        game.setIsSolved((Integer) ja.get(3));
+                        game.setActiveWord((String) ja.get(4));
+                        game.setUsersReady((Integer) ja.get(5));
+
+                        //Bildet ein inneres Array aus dem data-Array mit UserIds
+                        JSONArray jaa = ja.getJSONArray(6);
+
+                        game.getUserIds().clear();
+
+                        //Übergibt die UserIds an das Game-Objekt
+                        for (int i = 0; i < jaa.length(); i++) {
+
+                            game.getUserIds().add((String) jaa.get(i));
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
             return null;
         }
     }
@@ -616,5 +802,21 @@ public class Controller {
 
     public void setPictureWait(int pictureWait) {
         this.pictureWait = pictureWait;
+    }
+
+    public Game getGame() {
+        return game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
+    public int getRefreshGame() {
+        return refreshGame;
+    }
+
+    public void setRefreshGame(int refreshGame) {
+        this.refreshGame = refreshGame;
     }
 }

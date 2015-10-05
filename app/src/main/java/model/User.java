@@ -24,6 +24,7 @@ public class User {
     private int isLobbyOwner;
     private int isPainter;
     private int gameActive;
+    private int isReady;
 
     private int screenWidth;
     //--- Ende Attribute ---
@@ -40,6 +41,7 @@ public class User {
         this.isLobbyOwner = isLobbyOwner;
         this.isPainter = 0;
         this.gameActive = 0;
+        this.isReady = 0;
     }
 
     //Getter & Setter
@@ -97,5 +99,13 @@ public class User {
 
     public void setScreenWidth(int screenWidth) {
         this.screenWidth = screenWidth;
+    }
+
+    public int getIsReady() {
+        return isReady;
+    }
+
+    public void setIsReady(int isReady) {
+        this.isReady = isReady;
     }
 }

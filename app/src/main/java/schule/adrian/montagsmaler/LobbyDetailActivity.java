@@ -1,7 +1,9 @@
 package schule.adrian.montagsmaler;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,12 +39,16 @@ import controller.Controller;
  */
 public class LobbyDetailActivity extends AppCompatActivity implements View.OnClickListener {
 
-    //--- Anfnag Attribute ---
+    //--- Anfang Attribute ---
     private String lobbyName;
     private String lobbyId;
+    private int stopHandler;
 
     private HttpClient httpclient;
+    private Handler handler;
     private ListView detailListView;
+    private Dialog gameStartsDialog;
+    private TextView mTextView;
 
     private Button button_join;
     private Button button_leave;
@@ -69,8 +75,12 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         this.button_leave.setOnClickListener(this);
         this.button_start = (Button)findViewById(R.id.btn_lobbydetail_start);
         this.button_start.setOnClickListener(this);
-        userNames = new ArrayList<String>();
-        tempUserNames = new ArrayList<String>();
+        this.userNames = new ArrayList<String>();
+        this.tempUserNames = new ArrayList<String>();
+        this.stopHandler = 0;
+
+        //Dialog, der beim GameStart angezeigt wird
+        this.gameStartsDialog = new Dialog(this);
 
         //Ruft die User der Lobby vom Controller ab und fügt sie der User-Namen-Liste hinzu
         for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
@@ -92,7 +102,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         detailListView.setAdapter(lobbylistAdapter);
 
         //Setzt den Lobbynamen als Text auf dem Screen
-        final TextView mTextView = (TextView) findViewById(R.id.lobbyDetailName);
+        mTextView = (TextView) findViewById(R.id.lobbyDetailName);
         mTextView.setText("Lobby: " + lobbyName);
 
         //Aktiviert Buttons, abhängig davon, ob der User bereits in der Lobby ist
@@ -115,16 +125,11 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             button_start.setVisibility(View.INVISIBLE);
         }
 
-        //TODO StartButton Abfrage schon oben?
-        /*//Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
-        if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
-            button_start.setEnabled(true);
-        } else {
-            button_start.setEnabled(false);
-            button_start.setVisibility(View.INVISIBLE);
-        }*/
+        //Handler, der die Refresh-Runnable aufruft
+        handler = new Handler();
+        handler.postDelayed(refreshRunnable, 2000);
 
-        //Instanziert einen Timer
+        /*//Instanziert einen Timer
         Timer timer = new Timer();
 
         //Erzeugt einen TimerTask, der kontinuierlich die User der Lobby aus der DB holt
@@ -179,16 +184,111 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             }
 
         //Intervall (initiale Pause, Pause zwischne den Durchläufen
-        }, 2000, 2000);
+        }, 2000, 2000);*/
     }
+
+    private Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            //Instanziert eine Temp-Liste
+            ArrayList<String> al = new ArrayList<String>();
+
+            //Fügt der Liste die Namen der zugehörigen User hinzu
+            for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
+                if (Controller.getInstance().getLobbyList().get(i).getId().equals(Controller.getInstance().getActiveLobby())) {
+                    lobbyName = Controller.getInstance().getLobbyList().get(i).getName();
+                    lobbyId = Controller.getInstance().getLobbyList().get(i).getId();
+
+                    for (int j = 0; j < Controller.getInstance().getLobbyList().get(i).getUsers().size(); j++) {
+                        al.add(Controller.getInstance().getLobbyList().get(i).getUsers().get(j));
+                    }
+                }
+            }
+
+            //Ersetzt die User-Namen-Liste mit der neuen Liste
+            userNames = new ArrayList<String>(al);
+
+            //Falls 4 Spieler in der Lobby sind, dann wird der Join-Button deaktiviert
+            if (userNames.size() > 3) {
+                button_join.setEnabled(false);
+            }
+
+            //Leert den Adapter und lädt die neue Liste
+            lobbylistAdapter.clear();
+            lobbylistAdapter.addAll(userNames);
+
+            //Übergibt den Adapter erneut
+            detailListView.setAdapter(lobbylistAdapter);
+
+            //TODO GetLobbys als AutoRefresh?
+            //Startet den nächsten Task zum Abruf der Lobby-Daten
+            Controller.getInstance().getLobbys();
+
+            if (!gameStartsDialog.isShowing()) {
+
+                if (Controller.getInstance().getUser().getGameActive() == 2) {
+
+                    Controller.getInstance().setRefreshGame(1);
+
+                    showStartDialog();
+                }
+            }
+
+            if (Controller.getInstance().getGame().getUsersReady() > 0) {
+
+                if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+
+                    if (Controller.getInstance().getUser().getIsPainter() == 1) {
+
+                        //Der Maler setzt für alle Spieler GameActive auf 1
+                        String[] array = {lobbyId, "1"};
+                        Controller.getInstance().setGameActive(array);
+
+                        //Der Maler wechselt in die Draw View
+                        thread_draw.run();
+                        stopHandler = 1;
+
+                    } else {
+
+                        //Der Rest wechselt in die Watch View
+                        thread_watch.run();
+                        stopHandler = 1;
+                    }
+                }
+            }
+
+            if (stopHandler == 0) {
+
+                handler.postDelayed(this, 2000);
+            }
+        }
+    };
 
     public void showStartDialog() {
 
-        //Erzeugt einen "Bitte warten" Dialog
-        final Dialog gameStartsDialog = new Dialog(this);
-
         //Ordnet dem Dialog ein Layout zu
         gameStartsDialog.setContentView(R.layout.gamestart_waiter);
+
+        //Instanziert einen Button für den Dialog
+        Button smallBtn = (Button)gameStartsDialog.findViewById(R.id.btn_ready);
+
+        //Definiert einen Listener für den Button
+        smallBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                Controller.getInstance().getUser().setIsReady(1);
+
+                //Setzt den "Bitte warten" Text
+                final TextView mTextView = (TextView) gameStartsDialog.findViewById(R.id.tv_gamestart);
+                mTextView.setText("Bitte warten...");
+
+                Controller.getInstance().setUserReady();
+
+            }
+        });
 
         //Zeigt den Dialog an
         gameStartsDialog.show();
@@ -287,6 +387,9 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         //Button "Start"
         } else if(v.getId()==R.id.btn_lobbydetail_start) {
 
+            Controller.getInstance().createGame(lobbyId);
+
+
             //Dialog "Bitte warten" ?
 
             //Game im Controller erstellen (Mind. 2 Spieler!!)
@@ -295,6 +398,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
+    //TODO Kann raus?
     public void checkStartButton() {
 
         //Handelt es sich beim User um den Lobby-Owner, dann wird der Start-Button sichtbar
@@ -305,6 +409,38 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             button_start.setVisibility(View.INVISIBLE);
         }
     }
+
+    //Methoden zum Wechsel der Activity
+    public void goToActivity_Draw(){
+        Intent profileIntent = new Intent(this, DrawActivity.class);
+        startActivity(profileIntent);
+    }
+    public void goToActivity_Watch(){
+        Intent profileIntent = new Intent(this, WatchActivity.class);
+        startActivity(profileIntent);
+    }
+
+    //Threads für den Wechsel der Activity
+    Thread thread_draw = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Draw();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    Thread thread_watch = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Watch();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
 
     /**
      * Fügt einen User per HttpGet einer Lobby hinzu
@@ -390,5 +526,29 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             return null;
         }
     }
+
+    //TODO kann raus?
+    /**
+     * Setzt für einen User per HttpGet das Ready-Flag
+     */
+   /* private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            //Execute-String
+            String urlSetReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                                + "&method=UpdateIsUserReady&State=1&UserId=" + Controller.getInstance().getUser().getId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetReady));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }*/
 }
 
