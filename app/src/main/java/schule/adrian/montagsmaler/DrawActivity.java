@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import controller.Controller;
@@ -18,7 +19,7 @@ import view.DrawingView;
 public class DrawActivity extends AppCompatActivity implements View.OnClickListener {
 
     private DrawingView drawView;
-    private ImageButton button_erase;
+    private ImageButton button_erase, currPaint;
     private Dialog infoDialog;
     private Handler handler;
     private Handler resetHandler;
@@ -28,6 +29,10 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draw);
+
+        LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
+        currPaint = (ImageButton)paintLayout.getChildAt(5);
+        currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
 
         this.drawView = (DrawingView)findViewById(R.id.drawing);
         this.drawView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
@@ -97,6 +102,19 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
             Controller.getInstance().resetGame("0");
         }
     };
+
+    public void paintClicked(View view){
+        //use chosen color
+        if(view!=currPaint){
+            //update color
+            ImageButton imgView = (ImageButton)view;
+            String color = view.getTag().toString();
+            drawView.setColor(color);
+            imgView.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
+            currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint));
+            currPaint=(ImageButton)view;
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

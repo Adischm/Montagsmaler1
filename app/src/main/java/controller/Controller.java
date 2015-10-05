@@ -453,7 +453,7 @@ public class Controller {
                         JSONArray jaa = ja.getJSONArray(i);
 
                         PicturePart pP = new PicturePart(Float.parseFloat(jaa.getString(0)), Float.parseFloat(jaa.getString(1)),
-                                Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)));
+                                Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)), jaa.getString(4));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();

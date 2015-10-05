@@ -185,8 +185,9 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             float x = (Controller.getInstance().getpParts().get(i).getX() * Controller.getInstance().getUser().getScreenWidth());
             float y = (Controller.getInstance().getpParts().get(i).getY() * Controller.getInstance().getUser().getScreenWidth());
             int event = Controller.getInstance().getpParts().get(i).getEvent();
+            String color = Controller.getInstance().getpParts().get(i).getColor();
 
-            watchView.paintPicture(x, y, event);
+            watchView.paintPicture(x, y, event, color);
 
             Controller.getInstance().setLastPP(Controller.getInstance().getpParts().get(i).getId());
         }
