@@ -285,7 +285,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
                 final TextView mTextView = (TextView) gameStartsDialog.findViewById(R.id.tv_gamestart);
                 mTextView.setText("Bitte warten...");
 
-                new SetUserReadyTask().execute();
+                Controller.getInstance().setUserReady();
 
             }
         });
@@ -527,10 +527,11 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         }
     }
 
+    //TODO kann raus?
     /**
      * Setzt für einen User per HttpGet das Ready-Flag
      */
-    private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
+   /* private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -548,6 +549,6 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
             return null;
         }
-    }
+    }*/
 }
 

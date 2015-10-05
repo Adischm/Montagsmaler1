@@ -2,7 +2,6 @@ package controller;
 
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.util.Log;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -120,6 +119,23 @@ public class Controller {
     public void setGameActive(String[] array) {
 
         new SetGameActiveTask().execute(array);
+    }
+
+    public void resetGame(String state) {
+
+        String[] array = {game.getLobbyId(), state};
+
+        new ResetGameTask().execute(array);
+    }
+
+    public void setResolved() {
+
+        new SetResolvedTask().execute(user.getId());
+    }
+
+    public void setUserReady() {
+
+        new SetUserReadyTask().execute();
     }
 
     //--- Anfang Tasks ---
@@ -519,6 +535,88 @@ public class Controller {
     /**
      *
      */
+    private class ResetGameTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            String lobbyId = strings[0];
+            String state = strings[1];
+            String painter = "";
+
+            if (game.getNextPainterId().equals("")) {
+                painter = user.getId();
+            } else {
+                painter = game.getNextPainterId();
+            }
+
+            //Execute-String
+            String urlSetAllIsReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=ResetGameForNewRound"
+                                        + "&State=" + state + "&LobbyId=" + lobbyId + "&NextMaler=" + painter;
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetAllIsReady));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
+    private class SetResolvedTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            String nextPainter = strings[0];
+
+            //TODO Warum wird resolved nicht gesetzt?
+
+            //Execute-String
+            String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetResolved));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * Setzt für einen User per HttpGet das Ready-Flag
+     */
+    private class SetUserReadyTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            //Execute-String
+            String urlSetReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                    + "&method=UpdateIsUserReady&State=1&UserId=" + user.getId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlSetReady));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
     private class AutoRefreshDataTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -623,11 +721,13 @@ public class Controller {
 
                         game.setId((String)ja.get(0));
                         game.setPainterId((String) ja.get(1));
-                        game.setActiveWord((String) ja.get(2));
-                        game.setUsersReady((Integer) ja.get(3));
+                        game.setNextPainterId((String) ja.get(2));
+                        game.setIsSolved((Integer) ja.get(3));
+                        game.setActiveWord((String) ja.get(4));
+                        game.setUsersReady((Integer) ja.get(5));
 
                         //Bildet ein inneres Array aus dem data-Array mit UserIds
-                        JSONArray jaa = ja.getJSONArray(4);
+                        JSONArray jaa = ja.getJSONArray(6);
 
                         game.getUserIds().clear();
 

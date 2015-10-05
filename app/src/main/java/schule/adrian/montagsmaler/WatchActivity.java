@@ -1,6 +1,7 @@
 package schule.adrian.montagsmaler;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +23,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private Button button_Guess;
     private Handler handler;
     private Dialog infoDialog;
+    private int stopHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,17 +37,48 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         this.button_Guess = (Button) findViewById(R.id.button_Guess);
         this.button_Guess.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
+        this.stopHandler = 0;
 
         //Handler, der die Refresh-DrawPoints Runnable aufruft
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 500);
+        handler.postDelayed(refreshRunnable, 1000);
     }
 
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
             watchPainting();
-            handler.postDelayed(this, 100);
+
+            //TODO Beim Löser nicht anzeigen!
+
+            if (Controller.getInstance().getGame().getIsSolved() == 1) {
+
+                showInfoDialog("Es wurde gelöst!", "OK", 1);
+            }
+
+            if (Controller.getInstance().getGame().getUsersReady() > 0) {
+
+                if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+
+                    if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
+
+                        //Der naächste Maler wechselt nun in die Draw View
+                        thread_draw.run();
+                        stopHandler = 1;
+
+                    } else {
+
+                        //Der Rest wechselt in die Watch View
+                        thread_watch.run();
+                        stopHandler = 1;
+                    }
+                }
+            }
+
+            if (stopHandler == 0) {
+
+                handler.postDelayed(this, 100);
+            }
         }
     };
 
@@ -80,7 +113,10 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
             if (solvingWord.equals(Controller.getInstance().getGame().getActiveWord())) {
 
-                showInfoDialog("Die Lösung ist richtig!" + System.getProperty ("line.separator") + "Du bist der nächste Maler", "OK", 1);
+                //Ruft über den Controller einen Task auf, der Resolved und nextPainter in der DB setzt
+                Controller.getInstance().setResolved();
+
+                showInfoDialog("Die Lösung ist richtig!\nDu bist der nächste Maler", "OK", 1);
 
             } else {
 
@@ -110,14 +146,15 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
                 int decider = solution;
 
-                if (decider == 0) {
+                if (smallBtn.getText().equals("OK") && decider == 0) {
                     infoDialog.dismiss();
-                } else if (decider == 1) {
-                    infoTextView.setText("Bereit für die nächste Runde?");
+                } else if (smallBtn.getText().equals("OK") && decider == 1) {
+                    infoTextView.setText("Nächste Runde?");
                     smallBtn.setText("Bereit");
-                    decider = 2;
-                } else if (decider == 2){
-
+                } else if (smallBtn.getText().equals("Bereit")){
+                    smallBtn.setEnabled(false);
+                    infoTextView.setText("Bitte warten...");
+                    Controller.getInstance().setUserReady();
                 }
 
             }
@@ -145,4 +182,36 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             Controller.getInstance().setLastPP(Controller.getInstance().getpParts().get(i).getId());
         }
     }
+
+    //Methoden zum Wechsel der Activity
+    public void goToActivity_Draw(){
+        Intent profileIntent = new Intent(this, DrawActivity.class);
+        startActivity(profileIntent);
+    }
+    public void goToActivity_Watch(){
+        Intent profileIntent = new Intent(this, WatchActivity.class);
+        startActivity(profileIntent);
+    }
+
+    //Threads für den Wechsel der Activity
+    Thread thread_draw = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Draw();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    Thread thread_watch = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Watch();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
 }
