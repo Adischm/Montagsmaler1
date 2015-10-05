@@ -45,7 +45,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
         //Handler, der die Refresh-DrawPoints Runnable aufruft
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 2000);
+        handler.postDelayed(refreshRunnable, 4000);
     }
 
 

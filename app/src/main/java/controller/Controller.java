@@ -2,6 +2,7 @@ package controller;
 
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.util.Log;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -579,6 +580,8 @@ public class Controller {
 
             //Execute-String
             String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
+
+            Log.i("FU", "ResolveString: " + urlSetResolved);
 
             //Führt die GetFunktion aus
             try {
