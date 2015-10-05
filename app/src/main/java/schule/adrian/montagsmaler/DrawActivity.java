@@ -21,6 +21,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton button_erase;
     private Dialog infoDialog;
     private Handler handler;
+    private Handler resetHandler;
     private int stopHandler;
 
     @Override
@@ -41,48 +42,61 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
 
         //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
-        Controller.getInstance().resetGame("0");
+        //Controller.getInstance().resetGame("0");
 
-        //Handler, der die Refresh-DrawPoints Runnable aufruft
+        //Handler, der die RefreshRunnable aufruft (in Intervallen)
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 2000);
+        handler.postDelayed(refreshRunnable, 4000);
+
+        //Handler, der die ResetGameRunnable aufruft (1x)
+        this.resetHandler = new Handler();
+        resetHandler.postDelayed(resetGameRunnable, 2000);
     }
 
 
-private Runnable refreshRunnable = new Runnable() {
-    @Override
-    public void run() {
+    private Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
 
-        if (Controller.getInstance().getGame().getIsSolved() == 1) {
+            if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
-            showInfoDialog("Es wurde gelöst!", "OK");
-        }
+                showInfoDialog("Es wurde gelöst!", "OK");
+            }
 
-        if (Controller.getInstance().getGame().getUsersReady() > 0) {
+            if (Controller.getInstance().getGame().getUsersReady() > 0) {
 
-            if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+                if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
-                if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
+                    if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
 
-                    //Der naächste Maler wechselt nun in die Draw View
-                    thread_draw.run();
-                    stopHandler = 1;
+                        //Der naächste Maler wechselt nun in die Draw View
+                        thread_draw.run();
+                        stopHandler = 1;
 
-                } else {
+                    } else {
 
-                    //Der Rest wechselt in die Watch View
-                    thread_watch.run();
-                    stopHandler = 1;
+                        //Der Rest wechselt in die Watch View
+                        thread_watch.run();
+                        stopHandler = 1;
+                    }
                 }
             }
-        }
 
-        if (stopHandler == 0) {
+            if (stopHandler == 0) {
 
-            handler.postDelayed(this, 500);
+                handler.postDelayed(this, 100);
+            }
         }
-    }
-};
+    };
+
+    private Runnable resetGameRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
+            Controller.getInstance().resetGame("0");
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -139,7 +153,11 @@ private Runnable refreshRunnable = new Runnable() {
 
                 } else if (smallBtn.getText().equals("Bereit")){
                     smallBtn.setEnabled(false);
+                    smallBtn.setVisibility(View.INVISIBLE);
                     infoTextView.setText("Bitte warten...");
+
+                    Controller.getInstance().truncateCoordinates();
+
                     Controller.getInstance().setUserReady();
                 }
 

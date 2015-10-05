@@ -37,11 +37,11 @@ public class DrawingView extends View {
     private int event_dif = 0;
     private int drawID = 0;
 
-    private HttpClient httpclient;
+    //private HttpClient httpclient;
 
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
-        httpclient = new DefaultHttpClient();
+        //httpclient = new DefaultHttpClient();
         setupDrawing();
     }
 
@@ -143,6 +143,8 @@ public class DrawingView extends View {
 
         @Override
         protected Void doInBackground(String... strings) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //Führt die GetFunktion aus
             try {
