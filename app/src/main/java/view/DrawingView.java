@@ -144,16 +144,12 @@ public class DrawingView extends View {
                                 + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId()
                                 + "&color=" + colorString;
 
-        Log.i("FU", "url: " + urlDrawPoints);
-
         new DrawPointsTask().execute(urlDrawPoints);
     }
 
     public void setColor(String newColor){
 
         colorString = newColor.substring(1);
-
-        Log.i("FU", "colorstring: " + colorString);
 
         //set color
         invalidate();

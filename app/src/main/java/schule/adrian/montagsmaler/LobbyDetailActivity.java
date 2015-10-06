@@ -188,6 +188,10 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
+                    if (gameStartsDialog.isShowing()) {
+                        gameStartsDialog.dismiss();
+                    }
+
                     if (Controller.getInstance().getUser().getIsPainter() == 1) {
 
                         //Der Maler setzt für alle Spieler GameActive auf 1
@@ -230,7 +234,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         gameStartsDialog.setContentView(R.layout.gamestart_waiter);
 
         //Instanziert einen Button für den Dialog
-        Button smallBtn = (Button)gameStartsDialog.findViewById(R.id.btn_ready);
+        final Button smallBtn = (Button)gameStartsDialog.findViewById(R.id.btn_ready);
 
         //Definiert einen Listener für den Button
         smallBtn.setOnClickListener(new View.OnClickListener() {
@@ -243,6 +247,9 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
                 //Setzt den "Bitte warten" Text
                 final TextView mTextView = (TextView) gameStartsDialog.findViewById(R.id.tv_gamestart);
                 mTextView.setText("Bitte warten...");
+
+                smallBtn.setEnabled(false);
+                smallBtn.setVisibility(View.INVISIBLE);
 
                 Controller.getInstance().setUserReady();
 

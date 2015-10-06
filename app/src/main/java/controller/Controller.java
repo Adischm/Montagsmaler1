@@ -55,6 +55,7 @@ public class Controller {
     private Game game;
     private int wait = 0;
     private int pictureWait = 0;
+    private int wordWait = 0;
     //private HttpClient httpclient;
     private Handler handler;
 
@@ -136,9 +137,9 @@ public class Controller {
         new ResetGameTask().execute(array);
     }
 
-    public void setResolved() {
+    public void setResolved(String nextPainter, String state) {
 
-        new SetResolvedTask().execute(user.getId());
+        new SetResolvedTask().execute(nextPainter, state);
     }
 
     public void setUserReady() {
@@ -149,6 +150,11 @@ public class Controller {
     public void truncateCoordinates() {
 
         new TruncateCoordinatesTask().execute();
+    }
+
+    public void updateWord() {
+
+        new UpdateWordTask().execute();
     }
 
     //--- Anfang Tasks ---
@@ -556,7 +562,7 @@ public class Controller {
                             //Übergibt die MalerId an die Datenbank (gameobjects + user)
                             //Execute-String
                             String urlSetPainter = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetPainter"
-                                    + "&LobbyId=" + lobbyId + "&UserId=" + user.getId() + "&GameId=" + game.getId();
+                                    + "&LobbyId=" + lobbyId + "&UserId=" + game.getUserIds().get(i) + "&GameId=" + game.getId();
 
                             //Führt die GetFunktion aus
                             try {
@@ -655,11 +661,11 @@ public class Controller {
             HttpClient httpclient = new DefaultHttpClient();
 
             String nextPainter = strings[0];
+            String state = strings[1];
 
             //Execute-String
-            String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
-
-            Log.i("FU", "ResolveString: " + urlSetResolved);
+            String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter
+                                + "&LobbyId=" + game.getLobbyId() + "&State=" + state;
 
             //Führt die GetFunktion aus
             try {
@@ -724,6 +730,75 @@ public class Controller {
 
             //httpclient.getConnectionManager().shutdown();
 
+            return null;
+        }
+    }
+
+    /**
+     *
+     */
+    private class UpdateWordTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            HttpClient httpclient = new DefaultHttpClient();
+
+            //HttpResponse
+            HttpResponse updateWordResponse = null;
+
+            //Execute-String
+            String urlupdateWord = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=UpdateActiveWord&GameId=" + game.getId();
+
+            //Führt die GetFunktion aus
+            try {
+                updateWordResponse = httpclient.execute(new HttpGet(urlupdateWord));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            StatusLine statusLine = updateWordResponse.getStatusLine();
+
+            if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                try {
+                    updateWordResponse.getEntity().writeTo(out);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String responseString = out.toString();
+
+                try {
+                    updateWordResponse.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
+
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                try {
+                    JSONObject jsonObject = new JSONObject(responseString);
+                    JSONArray ja = jsonObject.getJSONArray("data");
+
+                    //Extrahiert GameId und ActiveWord aus data
+                    game.setActiveWord((String) ja.get(0));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            wordWait = 0;
             return null;
         }
     }
@@ -928,6 +1003,14 @@ public class Controller {
 
     public int getPictureWait() {
         return pictureWait;
+    }
+
+    public int getWordWait() {
+        return wordWait;
+    }
+
+    public void setWordWait(int wordWait) {
+        this.wordWait = wordWait;
     }
 
     public void setPictureWait(int pictureWait) {
