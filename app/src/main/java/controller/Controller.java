@@ -56,7 +56,6 @@ public class Controller {
     private int wait = 0;
     private int pictureWait = 0;
     private int wordWait = 0;
-    //private HttpClient httpclient;
     private Handler handler;
 
     private int refreshUser = 0;
@@ -69,10 +68,11 @@ public class Controller {
     public Controller(){
 
         this.pParts = new ArrayList<PicturePart>();
-        this.user = new User();
-        this.game = new Game();
+        //this.user = new User();
+        //this.game = new Game();
 
-        //this.httpclient = new DefaultHttpClient();
+        this.user = User.getInstance();
+        this.game = Game.getInstance();
         this.lobbyList = new ArrayList<Lobby>();
 
         //Handler, der die Refresh-Runnable aufruft
