@@ -69,6 +69,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
                         //Der naächste Maler wechselt nun in die Draw View
                         thread_draw.run();
+
                         stopHandler = 1;
 
                     } else {
@@ -197,10 +198,12 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     public void goToActivity_Draw(){
         Intent profileIntent = new Intent(this, DrawActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
     public void goToActivity_Watch(){
         Intent profileIntent = new Intent(this, WatchActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
 
     //Threads für den Wechsel der Activity

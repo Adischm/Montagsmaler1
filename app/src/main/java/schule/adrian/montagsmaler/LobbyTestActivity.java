@@ -37,6 +37,7 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
 
     //--- Anfang Attribute ---
     public Button button_new;
+    public Button button_refresh;
     private HttpClient httpclient;
     private ArrayList<String> lobbyNames;
     //--- Ende Attribute ---
@@ -55,6 +56,8 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
         this.httpclient =  new DefaultHttpClient();
         this.button_new = (Button)findViewById(R.id.button_lobby_new);
         this.button_new.setOnClickListener(this);
+        this.button_refresh = (Button)findViewById(R.id.button_refresh);
+        this.button_refresh.setOnClickListener(this);
         this.lobbyNames = new ArrayList<String>();
 
         //Setzt das Wait-Flag im Controller
@@ -130,6 +133,11 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
+    public void onBackPressed() {
+        thread_main.run();
+    }
+
+    @Override
     /**
      * Click-Listener für alle Buttons der Activity
      */
@@ -144,17 +152,28 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
             //Ordnet dem Dialog ein Layout zu
             newLobbyDialog.setContentView(R.layout.lobby_creator);
 
-            //Instanziert einen Button für den Dialog
-            Button smallBtn = (Button)newLobbyDialog.findViewById(R.id.btn_create);
+            //Instanziert Buttons für den Dialog
+            Button btnCreate = (Button)newLobbyDialog.findViewById(R.id.btn_create);
+            Button btnBack = (Button)newLobbyDialog.findViewById(R.id.btn_back);
 
-            //Definiert einen Listener für den Button
-            smallBtn.setOnClickListener(new OnClickListener() {
+            //Definiert einen Listener für den ZurückButton
+            btnBack.setOnClickListener(new OnClickListener() {
+
+                 @Override
+                 public void onClick(View v) {
+
+                     newLobbyDialog.dismiss();
+                 }
+            });
+
+            //Definiert einen Listener für den CreateButton
+            btnCreate.setOnClickListener(new OnClickListener() {
 
                 @Override
                 public void onClick(View v) {
 
                     //Ermittelt den eingegebenen Text
-                    TextView tvLobbyName = (TextView)newLobbyDialog.findViewById(R.id.edit_lobbyname);
+                    TextView tvLobbyName = (TextView) newLobbyDialog.findViewById(R.id.edit_lobbyname);
                     String lobbyName = tvLobbyName.getText().toString();
 
                     //Holt die ID des Users (also des Lobby-Erstellers)
@@ -175,7 +194,7 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
 
                     StatusLine statusLine = response.getStatusLine();
 
-                    if(statusLine.getStatusCode() == HttpStatus.SC_OK) {
+                    if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
 
                         //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -205,7 +224,7 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
                                 //Nun wird der User der Lobby zugeordnet
                                 //Execute-String
                                 String urlSetUserToLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=setUserToLobby&LobbyId="
-                                                            + lobbyId + "&UserId=" + userId + "&Owner=1";
+                                        + lobbyId + "&UserId=" + userId + "&Owner=1";
 
                                 //Führt die GetFunktion aus
                                 try {
@@ -232,7 +251,8 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
                                 Controller.getInstance().getLobbys();
 
                                 //Wartet auf den Controller
-                                while (Controller.getInstance().getWait() == 1) {}
+                                while (Controller.getInstance().getWait() == 1) {
+                                }
 
                                 //Sobald der Controller den Wait-Wert auf 0 setzt, gehts weiter
                                 //Die Detail-Ansicht der erstellten Lobby wird aufgerufen
@@ -248,6 +268,9 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
 
             //Zeigt den Dialog an
             newLobbyDialog.show();
+        } else if(v.getId()==R.id.button_refresh) {
+
+            thread_lobby.run();
         }
     }
 
@@ -255,10 +278,17 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
     public void goToActivity_Detail(){
         Intent profileIntent = new Intent(this, LobbyDetailActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
     public void goToActivity_Lobby(){
         Intent profileIntent = new Intent(this, LobbyTestActivity.class);
         startActivity(profileIntent);
+        this.finish();
+    }
+    public void goToActivity_Main(){
+        Intent profileIntent = new Intent(this, MainActivity.class);
+        startActivity(profileIntent);
+        this.finish();
     }
 
     //Threads für den Wechsel der Activity
@@ -278,6 +308,17 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
             try {
                 //Your code goes here
                 goToActivity_Lobby();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    Thread thread_main = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                //Your code goes here
+                goToActivity_Main();
             } catch (Exception e) {
                 e.printStackTrace();
             }

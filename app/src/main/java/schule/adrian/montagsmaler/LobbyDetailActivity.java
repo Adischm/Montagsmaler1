@@ -112,7 +112,12 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
             //Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
             if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
-                button_start.setEnabled(true);
+
+                if (userNames.size() > 1) {
+                    button_start.setEnabled(true);
+                } else {
+                    button_start.setEnabled(false);
+                }
             } else {
                 button_start.setEnabled(false);
                 button_start.setVisibility(View.INVISIBLE);
@@ -128,63 +133,6 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         //Handler, der die Refresh-Runnable aufruft
         handler = new Handler();
         handler.postDelayed(refreshRunnable, 2000);
-
-        /*//Instanziert einen Timer
-        Timer timer = new Timer();
-
-        //Erzeugt einen TimerTask, der kontinuierlich die User der Lobby aus der DB holt
-        //Damit wird die Anzeige der zugehörigen User aktuell gehalten
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                detailListView.post(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        //Instanziert eine Temp-Liste
-                        ArrayList<String> al = new ArrayList<String>();
-
-                        //Fügt der Liste die Namen der zugehörigen User hinzu
-                        for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
-                            if (Controller.getInstance().getLobbyList().get(i).getId().equals(Controller.getInstance().getActiveLobby())) {
-                                lobbyName = Controller.getInstance().getLobbyList().get(i).getName();
-                                lobbyId = Controller.getInstance().getLobbyList().get(i).getId();
-
-                                for (int j = 0; j < Controller.getInstance().getLobbyList().get(i).getUsers().size(); j++) {
-                                    al.add(Controller.getInstance().getLobbyList().get(i).getUsers().get(j));
-                                }
-                            }
-                        }
-
-                        //Ersetzt die User-Namen-Liste mit der neuen Liste
-                        userNames = new ArrayList<String>(al);
-
-                        //Falls 4 Spieler in der Lobby sind, dann wird der Join-Button deaktiviert
-                        if (userNames.size() > 3) {
-                            button_join.setEnabled(false);
-                        }
-
-                        //Leert den Adapter und lädt die neue Liste
-                        lobbylistAdapter.clear();
-                        lobbylistAdapter.addAll(userNames);
-
-                        //Übergibt den Adapter erneut
-                        detailListView.setAdapter(lobbylistAdapter);
-
-                        //Startet den nächsten Task zum Abruf der Lobby-Daten
-                        Controller.getInstance().getLobbys();
-                    }
-                });
-
-                if (Controller.getInstance().getUser().getGameActive() == 2) {
-
-                    showStartDialog();
-                }
-            }
-
-        //Intervall (initiale Pause, Pause zwischne den Durchläufen
-        }, 2000, 2000);*/
     }
 
     private Runnable refreshRunnable = new Runnable() {
@@ -259,6 +207,16 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
                 }
             }
 
+            //Handelt es sich um den Lobby-Owner, dann wird auch der Start-Button sichtbar
+            if (Controller.getInstance().getUser().getIsLobbyOwner() == 1) {
+
+                if (userNames.size() > 1) {
+                    button_start.setEnabled(true);
+                } else {
+                    button_start.setEnabled(false);
+                }
+            }
+
             if (stopHandler == 0) {
 
                 handler.postDelayed(this, 500);
@@ -316,6 +274,11 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        thread_lobby.run();
     }
 
     @Override
@@ -415,10 +378,18 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
     public void goToActivity_Draw(){
         Intent profileIntent = new Intent(this, DrawActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
     public void goToActivity_Watch(){
         Intent profileIntent = new Intent(this, WatchActivity.class);
         startActivity(profileIntent);
+        this.finish();
+    }
+
+    public void goToActivity_Lobby(){
+        Intent profileIntent = new Intent(this, LobbyTestActivity.class);
+        startActivity(profileIntent);
+        this.finish();
     }
 
     //Threads für den Wechsel der Activity
@@ -437,6 +408,16 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         public void run() {
             try {
                 goToActivity_Watch();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    Thread thread_lobby = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                goToActivity_Lobby();
             } catch (Exception e) {
                 e.printStackTrace();
             }

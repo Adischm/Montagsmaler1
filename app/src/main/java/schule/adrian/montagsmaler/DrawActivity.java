@@ -20,6 +20,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
     private DrawingView drawView;
     private ImageButton button_erase, currPaint;
+    private Button button_newword, button_cancelround;
     private Dialog infoDialog;
     private Handler handler;
     private Handler resetHandler;
@@ -39,6 +40,10 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         this.drawView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
         this.button_erase = (ImageButton)findViewById(R.id.erase_btn);
         this.button_erase.setOnClickListener(this);
+        this.button_newword = (Button) findViewById(R.id.button_newword);
+        this.button_newword.setOnClickListener(this);
+        this.button_cancelround = (Button) findViewById(R.id.button_cancelround);
+        this.button_cancelround.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
         this.stopHandler = 0;
 
@@ -143,6 +148,10 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         //respond to clicks
         if(view.getId()==R.id.erase_btn){
             drawView.deletePainting();
+        } else if(view.getId()==R.id.button_newword){
+            drawView.deletePainting();
+        } else if(view.getId()==R.id.button_cancelround){
+            drawView.deletePainting();
         }
     }
 
@@ -190,10 +199,12 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     public void goToActivity_Draw(){
         Intent profileIntent = new Intent(this, DrawActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
     public void goToActivity_Watch(){
         Intent profileIntent = new Intent(this, WatchActivity.class);
         startActivity(profileIntent);
+        this.finish();
     }
 
     //Threads für den Wechsel der Activity

@@ -27,7 +27,7 @@
 
     <ListView
         android:layout_width="wrap_content"
-        android:layout_height="300dp"
+        android:layout_height="400dp"
         android:id="@+id/listView"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
@@ -41,4 +41,12 @@
         android:layout_below="@+id/listView"
         android:layout_alignRight="@+id/listView"
         android:layout_alignEnd="@+id/listView" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Refresh"
+        android:id="@+id/button_refresh"
+        android:layout_below="@+id/listView"
+        android:layout_toLeftOf="@+id/button_lobby_new" />
 </RelativeLayout>
