@@ -8,13 +8,15 @@ public class PicturePart {
     private float y;
     private int event;
     private int id;
+    private String color;
 
-    public PicturePart(float x, float y, int event, int id) {
+    public PicturePart(float x, float y, int event, int id, String color) {
 
         this.x = x;
         this.y = y;
         this.event = event;
         this.id = id;
+        this.color = color;
 
         Controller.getInstance().getpParts().add(this);
     }
@@ -49,5 +51,13 @@ public class PicturePart {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

@@ -44,7 +44,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
     private String lobbyId;
     private int stopHandler;
 
-    private HttpClient httpclient;
+    //private HttpClient httpclient;
     private Handler handler;
     private ListView detailListView;
     private Dialog gameStartsDialog;
@@ -68,7 +68,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         setContentView(R.layout.activity_lobby_detail);
 
         //Instanziert HttpClient, Buttons und Array-Listen
-        this.httpclient = new DefaultHttpClient();
+        //this.httpclient = new DefaultHttpClient();
         this.button_join = (Button)findViewById(R.id.btn_lobbydetail_join);
         this.button_join.setOnClickListener(this);
         this.button_leave = (Button)findViewById(R.id.btn_lobbydetail_leave);
@@ -229,6 +229,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
                 if (Controller.getInstance().getUser().getGameActive() == 2) {
 
+                    Controller.getInstance().getGame().setLobbyId(lobbyId);
                     Controller.getInstance().setRefreshGame(1);
 
                     showStartDialog();
@@ -260,7 +261,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
             if (stopHandler == 0) {
 
-                handler.postDelayed(this, 2000);
+                handler.postDelayed(this, 500);
             }
         }
     };
@@ -450,6 +451,8 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         @Override
         protected Void doInBackground(Void... params) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             //Bildet den Execute String, falls die Lobby leer ist, wird der erste User automatisch zum Lobby-Owner
             String urlSetUserToLobby = "";
 
@@ -486,6 +489,8 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
         @Override
         protected Void doInBackground(Void... params) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             //Execute-String
             String urlSetUserToLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=deleteUserFromLobby"
                     + "&UserId=" + Controller.getInstance().getUser().getId();
@@ -509,6 +514,8 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
         @Override
         protected Void doInBackground(String... strings) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //Extrahiert den übergebenen User-Namen
             String userName = strings[0];

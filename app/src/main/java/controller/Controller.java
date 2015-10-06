@@ -9,7 +9,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,7 +55,7 @@ public class Controller {
     private Game game;
     private int wait = 0;
     private int pictureWait = 0;
-    private HttpClient httpclient;
+    //private HttpClient httpclient;
     private Handler handler;
 
     private int refreshUser = 0;
@@ -66,7 +70,8 @@ public class Controller {
         this.pParts = new ArrayList<PicturePart>();
         this.user = new User();
         this.game = new Game();
-        this.httpclient = new DefaultHttpClient();
+
+        //this.httpclient = new DefaultHttpClient();
         this.lobbyList = new ArrayList<Lobby>();
 
         //Handler, der die Refresh-Runnable aufruft
@@ -114,6 +119,8 @@ public class Controller {
 
         game.setLobbyId(lobbyId);
 
+        Log.i("FU", "CreateGame LobbyID: " + game.getLobbyId());
+
         new CreateGameTask().execute(lobbyId);
     }
 
@@ -139,6 +146,11 @@ public class Controller {
         new SetUserReadyTask().execute();
     }
 
+    public void truncateCoordinates() {
+
+        new TruncateCoordinatesTask().execute();
+    }
+
     //--- Anfang Tasks ---
 
     /**
@@ -152,6 +164,8 @@ public class Controller {
 
             //Die Liste wird zunächst geleert
             lobbyList.clear();
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //HttpResponse
             HttpResponse response = null;
@@ -180,6 +194,13 @@ public class Controller {
                 }
 
                 String responseString = out.toString();
+
+                try {
+                    response.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -226,6 +247,13 @@ public class Controller {
                             }
 
                             String userResponseString = userOut.toString();
+
+                            try {
+                                response.getEntity().consumeContent();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            //httpclient.getConnectionManager().shutdown();
 
                             try {
                                 userOut.close();
@@ -277,6 +305,8 @@ public class Controller {
         @Override
         protected Void doInBackground(String... strings) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             //Username
             String userName = strings[0];
 
@@ -309,6 +339,13 @@ public class Controller {
                 String responseString = out.toString();
 
                 try {
+                    response.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
+
+                try {
                     out.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -327,6 +364,21 @@ public class Controller {
                 }
             }
 
+            //Nach dem Einloggen und dem Erstellen des User-Objekts werden in der DB die spielrelevanten Daten resettet
+            //-> UserCurrentLobbyId=0, isLobbyOwner=0, isPainter=0, UserIsReady=0, GameAcive=0
+
+            //Execute String
+            String urlResetUser = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=ResetPlayerAfterLogin&UserId=" + user.getId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlResetUser));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //httpclient.getConnectionManager().shutdown();
+
             //Aktiviert die Refresh-Schleife für den User
             refreshUser = 1;
 
@@ -344,6 +396,8 @@ public class Controller {
 
         @Override
         protected Void doInBackground(Void... params) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //Löscht zunächst die Liste mit Koordinaten
             pParts.clear();
@@ -377,6 +431,13 @@ public class Controller {
                 String responseString = out.toString();
 
                 try {
+                    response.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
+
+                try {
                     out.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -392,7 +453,7 @@ public class Controller {
                         JSONArray jaa = ja.getJSONArray(i);
 
                         PicturePart pP = new PicturePart(Float.parseFloat(jaa.getString(0)), Float.parseFloat(jaa.getString(1)),
-                                Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)));
+                                Integer.parseInt(jaa.getString(2)), Integer.parseInt(jaa.getString(3)), jaa.getString(4));
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -411,6 +472,8 @@ public class Controller {
 
         @Override
         protected Void doInBackground(String... strings) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             String lobbyId = strings[0];
 
@@ -441,6 +504,13 @@ public class Controller {
                 }
 
                 String responseString = out.toString();
+
+                try {
+                    createGameResponse.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -486,14 +556,15 @@ public class Controller {
                             //Übergibt die MalerId an die Datenbank (gameobjects + user)
                             //Execute-String
                             String urlSetPainter = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetPainter"
-                                                    + "&LobbyId=" + lobbyId + "&UserId=" + user.getId() + "&GameId=" + game.getId();
+                                    + "&LobbyId=" + lobbyId + "&UserId=" + user.getId() + "&GameId=" + game.getId();
 
                             //Führt die GetFunktion aus
                             try {
-                                createGameResponse = httpclient.execute(new HttpGet(urlSetPainter));
+                                httpclient.execute(new HttpGet(urlSetPainter));
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
+                            //httpclient.getConnectionManager().shutdown();
                         }
                     }
 
@@ -516,6 +587,8 @@ public class Controller {
         @Override
         protected Void doInBackground(String... strings) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             String lobbyId = strings[0];
             String state = strings[1];
 
@@ -528,6 +601,7 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //httpclient.getConnectionManager().shutdown();
 
             return null;
         }
@@ -541,6 +615,8 @@ public class Controller {
         @Override
         protected Void doInBackground(String... strings) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             String lobbyId = strings[0];
             String state = strings[1];
             String painter = "";
@@ -553,7 +629,7 @@ public class Controller {
 
             //Execute-String
             String urlSetAllIsReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=ResetGameForNewRound"
-                                        + "&State=" + state + "&LobbyId=" + lobbyId + "&NextMaler=" + painter;
+                    + "&State=" + state + "&LobbyId=" + lobbyId + "&NextMaler=" + painter;
 
             //Führt die GetFunktion aus
             try {
@@ -561,6 +637,8 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            //httpclient.getConnectionManager().shutdown();
 
             return null;
         }
@@ -574,9 +652,9 @@ public class Controller {
         @Override
         protected Void doInBackground(String... strings) {
 
-            String nextPainter = strings[0];
+            HttpClient httpclient = new DefaultHttpClient();
 
-            //TODO Warum wird resolved nicht gesetzt?
+            String nextPainter = strings[0];
 
             //Execute-String
             String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
@@ -590,6 +668,8 @@ public class Controller {
                 e.printStackTrace();
             }
 
+            //httpclient.getConnectionManager().shutdown();
+
             return null;
         }
     }
@@ -602,6 +682,8 @@ public class Controller {
         @Override
         protected Void doInBackground(Void... params) {
 
+            HttpClient httpclient = new DefaultHttpClient();
+
             //Execute-String
             String urlSetReady = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
                     + "&method=UpdateIsUserReady&State=1&UserId=" + user.getId();
@@ -612,6 +694,35 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            //httpclient.getConnectionManager().shutdown();
+
+            return null;
+        }
+    }
+
+    /**
+     * Löscht die Bild-Koordinaten einer Lobby in der DB
+     */
+    private class TruncateCoordinatesTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            HttpClient httpclient = new DefaultHttpClient();
+
+            //Execute-String
+            String urlTruncateCoordinates = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                    + "&method=truncateCoordinatesForLobbyId&LobbyId=" + game.getLobbyId();
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlTruncateCoordinates));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //httpclient.getConnectionManager().shutdown();
 
             return null;
         }
@@ -624,6 +735,8 @@ public class Controller {
 
         @Override
         protected Void doInBackground(Void... params) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //Autoschleife mit allen Update-Abfragen (User, Game, Lobby...?)
 
@@ -658,6 +771,13 @@ public class Controller {
                     String responseString = out.toString();
 
                     try {
+                        refreshUserResponse.getEntity().consumeContent();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //httpclient.getConnectionManager().shutdown();
+
+                    try {
                         out.close();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -687,7 +807,7 @@ public class Controller {
 
                 //TODO
                 //Execute-String
-                String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetGameInformation&LobbyId=" + activeLobby;
+                String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetGameInformation&LobbyId=" + game.getLobbyId();
 
                 //Führt die GetFunktion aus
                 try {
@@ -710,6 +830,13 @@ public class Controller {
                     }
 
                     String responseString = out.toString();
+
+                    try {
+                        refreshGameResponse.getEntity().consumeContent();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //httpclient.getConnectionManager().shutdown();
 
                     try {
                         out.close();

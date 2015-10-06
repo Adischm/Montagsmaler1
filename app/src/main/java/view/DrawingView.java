@@ -3,11 +3,13 @@ package view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -27,6 +29,8 @@ public class DrawingView extends View {
     private Path drawPath;
     //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
+    //initial color
+    private int paintColor = 0xFF000000;
     //canvas
     private Canvas drawCanvas;
     //canvas bitmap
@@ -35,13 +39,16 @@ public class DrawingView extends View {
     private float brushSize;
 
     private int event_dif = 0;
+    private int event_color = 0;
     private int drawID = 0;
 
-    private HttpClient httpclient;
+    private String colorString = "FF000000";
+
+    //private HttpClient httpclient;
 
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
-        httpclient = new DefaultHttpClient();
+        //httpclient = new DefaultHttpClient();
         setupDrawing();
     }
 
@@ -52,6 +59,7 @@ public class DrawingView extends View {
         //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
+        drawPaint.setColor(paintColor);
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(brushSize);
         drawPaint.setStyle(Paint.Style.STROKE);
@@ -80,6 +88,8 @@ public class DrawingView extends View {
         //detect user touch
         float touchX = event.getX();
         float touchY = event.getY();
+
+        event_color = paintColor;
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -131,9 +141,24 @@ public class DrawingView extends View {
         //Execute-String
         String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
                                 + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
-                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId();
+                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId()
+                                + "&color=" + colorString;
+
+        Log.i("FU", "url: " + urlDrawPoints);
 
         new DrawPointsTask().execute(urlDrawPoints);
+    }
+
+    public void setColor(String newColor){
+
+        colorString = newColor.substring(1);
+
+        Log.i("FU", "colorstring: " + colorString);
+
+        //set color
+        invalidate();
+        paintColor = Color.parseColor(newColor);
+        drawPaint.setColor(paintColor);
     }
 
     /**
@@ -143,6 +168,8 @@ public class DrawingView extends View {
 
         @Override
         protected Void doInBackground(String... strings) {
+
+            HttpClient httpclient = new DefaultHttpClient();
 
             //Führt die GetFunktion aus
             try {
