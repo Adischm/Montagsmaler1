@@ -177,7 +177,7 @@ public class DrawingView extends View {
 
         drawPoints.add(s);
 
-        if (drawPoints.size() == 10) {
+        if (drawPoints.size() == 10 || event_dif > 1) {
 
             createValues(drawPoints);
             drawPoints.clear();
