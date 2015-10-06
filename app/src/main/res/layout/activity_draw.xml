@@ -6,24 +6,54 @@
     tools:context=".DrawActivity" >
 
     <LinearLayout
-        android:layout_marginTop="10dp"
         android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_centerHorizontal="true">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10px"
+        android:orientation="vertical" >
 
-        <TextView
-            android:layout_width="250dp"
-            android:layout_height="25dp"
-            android:id="@+id/textView_solvingWord"
-            android:textSize="20dp"
-            android:layout_marginTop="17dp"
-            android:text="" />
-
-        <ImageButton
-            android:id="@+id/erase_btn"
-            android:layout_width="75dp"
+        <LinearLayout
+            android:layout_marginTop="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="50dp"
-            android:src="@drawable/eraser" />
+            android:layout_centerHorizontal="true">
+
+            <TextView
+                android:layout_width="250dp"
+                android:layout_height="25dp"
+                android:id="@+id/textView_solvingWord"
+                android:textSize="20dp"
+                android:layout_marginTop="17dp"
+                android:text="" />
+
+            <ImageButton
+                android:id="@+id/erase_btn"
+                android:layout_width="75dp"
+                android:layout_height="50dp"
+                android:src="@drawable/eraser" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_centerHorizontal="true">
+
+            <Button
+                android:layout_width="175dp"
+                android:layout_height="50dp"
+                android:text="Neues Wort"
+                android:id="@+id/button_newword" />
+
+            <Button
+                android:layout_width="175dp"
+                android:layout_height="50dp"
+                android:text="Runde abbrechen"
+                android:id="@+id/button_cancelround" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
