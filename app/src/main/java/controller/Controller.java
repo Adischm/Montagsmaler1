@@ -659,6 +659,8 @@ public class Controller {
             //Execute-String
             String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter + "&LobbyId=" + game.getLobbyId();
 
+            Log.i("FU", "ResolveString: " + urlSetResolved);
+
             //Führt die GetFunktion aus
             try {
                 httpclient.execute(new HttpGet(urlSetResolved));
