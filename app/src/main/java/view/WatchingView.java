@@ -22,6 +22,8 @@ public class WatchingView extends View {
     private Path drawPath;
     //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
+    //initial color
+    private int paintColor = 0xFF000000;
     //canvas
     private Canvas drawCanvas;
     //canvas bitmap
@@ -41,6 +43,7 @@ public class WatchingView extends View {
         //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
+        drawPaint.setColor(paintColor);
         drawPaint.setAntiAlias(true);
         drawPaint.setStrokeWidth(brushSize);
         drawPaint.setStyle(Paint.Style.STROKE);
@@ -65,7 +68,9 @@ public class WatchingView extends View {
         canvas.drawPath(drawPath, drawPaint);
     }
 
-    public void paintPicture(float x, float y, int event) {
+    public void paintPicture(float x, float y, int event, String color) {
+
+        setColor("#" + color);
 
         switch (event) {
             case 0:
@@ -89,6 +94,13 @@ public class WatchingView extends View {
         }
 
         invalidate();
+    }
+
+    public void setColor(String newColor){
+        //set color
+        invalidate();
+        paintColor = Color.parseColor(newColor);
+        drawPaint.setColor(paintColor);
     }
 
     public void deletePainting() {

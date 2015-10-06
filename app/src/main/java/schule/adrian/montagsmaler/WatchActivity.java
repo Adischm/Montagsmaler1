@@ -24,6 +24,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private Handler handler;
     private Dialog infoDialog;
     private int stopHandler;
+    private int stopWatching;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,22 +39,26 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         this.button_Guess.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
         this.stopHandler = 0;
+        this.stopWatching = 0;
 
         //Handler, der die Refresh-DrawPoints Runnable aufruft
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 1000);
+        handler.postDelayed(refreshRunnable, 4000);
     }
 
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            watchPainting();
 
-            //TODO Beim Löser nicht anzeigen!
+            if (stopWatching == 0) {
+                watchPainting();
+            }
 
-            if (Controller.getInstance().getGame().getIsSolved() == 1) {
+            if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
                 showInfoDialog("Es wurde gelöst!", "OK", 1);
+                stopWatching = 1;
+                Controller.getInstance().setLastPP(0);
             }
 
             if (Controller.getInstance().getGame().getUsersReady() > 0) {
@@ -109,7 +114,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         if(v == button_Guess){
             String solvingWord = editText_solvingWord.getText().toString().toLowerCase();
 
-            Log.i("FU", "Lösung: " + solvingWord);
+            Log.i("FU", "VorMethode LobbyId: " + Controller.getInstance().getGame().getLobbyId());
 
             if (solvingWord.equals(Controller.getInstance().getGame().getActiveWord())) {
 
@@ -117,6 +122,9 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                 Controller.getInstance().setResolved();
 
                 showInfoDialog("Die Lösung ist richtig!\nDu bist der nächste Maler", "OK", 1);
+
+                stopWatching = 1;
+                Controller.getInstance().setLastPP(0);
 
             } else {
 
@@ -153,6 +161,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                     smallBtn.setText("Bereit");
                 } else if (smallBtn.getText().equals("Bereit")){
                     smallBtn.setEnabled(false);
+                    smallBtn.setVisibility(View.INVISIBLE);
                     infoTextView.setText("Bitte warten...");
                     Controller.getInstance().setUserReady();
                 }
@@ -176,8 +185,9 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             float x = (Controller.getInstance().getpParts().get(i).getX() * Controller.getInstance().getUser().getScreenWidth());
             float y = (Controller.getInstance().getpParts().get(i).getY() * Controller.getInstance().getUser().getScreenWidth());
             int event = Controller.getInstance().getpParts().get(i).getEvent();
+            String color = Controller.getInstance().getpParts().get(i).getColor();
 
-            watchView.paintPicture(x, y, event);
+            watchView.paintPicture(x, y, event, color);
 
             Controller.getInstance().setLastPP(Controller.getInstance().getpParts().get(i).getId());
         }

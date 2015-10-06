@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import controller.Controller;
@@ -18,15 +19,20 @@ import view.DrawingView;
 public class DrawActivity extends AppCompatActivity implements View.OnClickListener {
 
     private DrawingView drawView;
-    private ImageButton button_erase;
+    private ImageButton button_erase, currPaint;
     private Dialog infoDialog;
     private Handler handler;
+    private Handler resetHandler;
     private int stopHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_draw);
+
+        LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
+        currPaint = (ImageButton)paintLayout.getChildAt(5);
+        currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
 
         this.drawView = (DrawingView)findViewById(R.id.drawing);
         this.drawView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
@@ -41,48 +47,74 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
 
         //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
-        Controller.getInstance().resetGame("0");
+        //Controller.getInstance().resetGame("0");
 
-        //Handler, der die Refresh-DrawPoints Runnable aufruft
+        //Handler, der die RefreshRunnable aufruft (in Intervallen)
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 2000);
+        handler.postDelayed(refreshRunnable, 4000);
+
+        //Handler, der die ResetGameRunnable aufruft (1x)
+        this.resetHandler = new Handler();
+        resetHandler.postDelayed(resetGameRunnable, 2000);
     }
 
 
-private Runnable refreshRunnable = new Runnable() {
-    @Override
-    public void run() {
+    private Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
 
-        if (Controller.getInstance().getGame().getIsSolved() == 1) {
+            if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
-            showInfoDialog("Es wurde gelöst!", "OK");
-        }
+                showInfoDialog("Es wurde gelöst!", "OK");
+            }
 
-        if (Controller.getInstance().getGame().getUsersReady() > 0) {
+            if (Controller.getInstance().getGame().getUsersReady() > 0) {
 
-            if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+                if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
-                if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
+                    if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
 
-                    //Der naächste Maler wechselt nun in die Draw View
-                    thread_draw.run();
-                    stopHandler = 1;
+                        //Der naächste Maler wechselt nun in die Draw View
+                        thread_draw.run();
+                        stopHandler = 1;
 
-                } else {
+                    } else {
 
-                    //Der Rest wechselt in die Watch View
-                    thread_watch.run();
-                    stopHandler = 1;
+                        //Der Rest wechselt in die Watch View
+                        thread_watch.run();
+                        stopHandler = 1;
+                    }
                 }
             }
+
+            if (stopHandler == 0) {
+
+                handler.postDelayed(this, 100);
+            }
         }
+    };
 
-        if (stopHandler == 0) {
+    private Runnable resetGameRunnable = new Runnable() {
+        @Override
+        public void run() {
 
-            handler.postDelayed(this, 500);
+            //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
+            Controller.getInstance().resetGame("0");
+        }
+    };
+
+    public void paintClicked(View view){
+        //use chosen color
+        if(view!=currPaint){
+            //update color
+            ImageButton imgView = (ImageButton)view;
+            String color = view.getTag().toString();
+            drawView.setColor(color);
+            imgView.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
+            currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint));
+            currPaint=(ImageButton)view;
         }
     }
-};
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -139,7 +171,11 @@ private Runnable refreshRunnable = new Runnable() {
 
                 } else if (smallBtn.getText().equals("Bereit")){
                     smallBtn.setEnabled(false);
+                    smallBtn.setVisibility(View.INVISIBLE);
                     infoTextView.setText("Bitte warten...");
+
+                    Controller.getInstance().truncateCoordinates();
+
                     Controller.getInstance().setUserReady();
                 }
 
