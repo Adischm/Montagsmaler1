@@ -24,6 +24,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private Handler handler;
     private Handler startHandler;
     private Dialog infoDialog;
+    private Dialog guessIsWrongDialog;
     private Dialog startDialog;
     private int stopHandler;
     private int stopWatching;
@@ -41,6 +42,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         this.button_Guess = (Button) findViewById(R.id.button_Guess);
         this.button_Guess.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
+        this.guessIsWrongDialog = new Dialog(this);
         this.startDialog = new Dialog(this);
         this.stopHandler = 0;
         this.stopWatching = 0;
@@ -163,7 +165,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
             } else {
 
-                showInfoDialog("Die Lösung ist falsch!", "OK", 0);
+                showGuessIsWrongDialog();
             }
 
         }
@@ -205,6 +207,32 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
         //Zeigt den Dialog an
         infoDialog.show();
+    }
+
+    public void showGuessIsWrongDialog() {
+
+        //Ordnet dem Dialog ein Layout zu
+        guessIsWrongDialog.setContentView(R.layout.watch_info_dialog);
+
+        final TextView infoTextView = (TextView)guessIsWrongDialog.findViewById(R.id.tv_infotext);
+        infoTextView.setText("Die Lösung ist falsch!");
+
+        //Instanziert einen Button für den Dialog
+        final Button smallBtn = (Button)guessIsWrongDialog.findViewById(R.id.info_btn);
+        smallBtn.setText("OK");
+
+        //Definiert einen Listener für den Button
+        smallBtn.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                guessIsWrongDialog.dismiss();
+            }
+        });
+
+        //Zeigt den Dialog an
+        guessIsWrongDialog.show();
     }
 
     public void showStartDialog() {

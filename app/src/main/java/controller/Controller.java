@@ -159,10 +159,114 @@ public class Controller {
 
     //--- Anfang Tasks ---
 
+    /* Holt per HttpGet die Daten aller Lobbys inkl. der zugeordneten User aus der DB
+    * Erstellt daraus Lobby-Objekte und fügt diese der LobbyListe hinzu
+    */
+    private class GetLobbysTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            HttpClient httpclient = new DefaultHttpClient();
+
+            //HttpResponse
+            HttpResponse response = null;
+
+            //Execute-String
+            String urlGetAllLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getAllLobbyFromDb";
+
+            //Führt die GetFunktion aus
+            try {
+                response = httpclient.execute(new HttpGet(urlGetAllLobby));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            StatusLine statusLine = response.getStatusLine();
+
+            if(statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                try {
+                    response.getEntity().writeTo(out);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String responseString = out.toString();
+
+                try {
+                    response.getEntity().consumeContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //httpclient.getConnectionManager().shutdown();
+
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                ArrayList<Lobby> tempLobbyList = new ArrayList<Lobby>();
+
+                //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                try {
+                    JSONObject jsonObject = new JSONObject(responseString);
+
+                    //Äusseres Array mit allen Lobbys
+                    JSONArray allLobbysArray = jsonObject.getJSONArray("data");
+
+                    //Aus dem Data-Array werden die LobbyIDs extrahiert und damit die zugehörigen User aus der DB geholt
+                    for (int i = 0; i < allLobbysArray.length(); i++) {
+
+                        //Mittleres Array mit Daten einer Lobby
+                        JSONArray oneLobbyArray = allLobbysArray.getJSONArray(i);
+
+                        //Inneres Array mit den Usern einer Lobby
+                        JSONArray lobbyUsersArray = oneLobbyArray.getJSONArray(4);
+
+                        //ArrayList für User
+                        ArrayList<String> lobbyUsers = new ArrayList<String>();
+
+                        for (int k = 0; k < lobbyUsersArray.length(); k++) {
+
+                            JSONArray oneUserArray = lobbyUsersArray.getJSONArray(k);
+
+                            //Die User einer Lobby werden der User-Liste zugefügt
+                            //Lobby-Owner werden markiert
+                            if ((Integer) oneUserArray.get(2) == 1) {
+                                lobbyUsers.add((String) oneUserArray.get(1) + " (Owner)");
+                            } else {
+                                lobbyUsers.add((String) oneUserArray.get(1));
+                            }
+                        }
+
+                        //Mit den Daten aus beiden Get-Aufrufen wird eine Lobby erstellt und der Lobby-Liste zugefügt
+                        Lobby lobby = new Lobby((String) oneLobbyArray.get(0), (String) oneLobbyArray.get(1), lobbyUsers);
+                        tempLobbyList.add(lobby);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //Die Liste wird zunächst geleert
+                lobbyList.clear();
+                lobbyList = tempLobbyList;
+            }
+
+            //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
+            wait = 0;
+            return null;
+        }
+    }
+
     /**
      * Holt per HttpGet die Daten aller Lobbys inkl. der zugeordneten User aus der DB
      * Erstellt daraus Lobby-Objekte und fügt diese der LobbyListe hinzu
-     */
+     *//*
     private class GetLobbysTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -301,7 +405,7 @@ public class Controller {
             wait = 0;
             return null;
         }
-    }
+    }*/
 
     /**
      * Holt per HttpGet die Daten des eingeloggten Users und übergibt diese an das User-Objekt
@@ -412,7 +516,7 @@ public class Controller {
             HttpResponse response = null;
 
             //Execute-String
-            String urlgetDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getDrawPoints&minId=" + lastPP;
+            String urlgetDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getDrawPoints&minId=" + lastPP + "&LobbyId=" + game.getLobbyId();
 
             //Führt die GetFunktion aus
             try {
@@ -811,11 +915,15 @@ public class Controller {
         @Override
         protected Void doInBackground(Void... params) {
 
-            HttpClient httpclient = new DefaultHttpClient();
-
             //Autoschleife mit allen Update-Abfragen (User, Game, Lobby...?)
 
+            //Aktualisiert die Lobbys
+            getLobbys();
+
+            //Aktualisiert den User
             if (refreshUser == 1) {
+
+                HttpClient userhttpclient = new DefaultHttpClient();
 
                 //HttpResponse
                 HttpResponse refreshUserResponse = null;
@@ -825,7 +933,7 @@ public class Controller {
 
                 //Führt die GetFunktion aus
                 try {
-                    refreshUserResponse = httpclient.execute(new HttpGet(urlRefreshUser));
+                    refreshUserResponse = userhttpclient.execute(new HttpGet(urlRefreshUser));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -874,19 +982,20 @@ public class Controller {
                 }
             }
 
+            //Aktualisiert das Game
             if (refreshGame == 1) {
+
+                HttpClient gamehttpclient = new DefaultHttpClient();
 
                 //HttpResponse
                 HttpResponse refreshGameResponse = null;
 
-
-                //TODO
                 //Execute-String
                 String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetGameInformation&LobbyId=" + game.getLobbyId();
 
                 //Führt die GetFunktion aus
                 try {
-                    refreshGameResponse = httpclient.execute(new HttpGet(urlRefreshGame));
+                    refreshGameResponse = gamehttpclient.execute(new HttpGet(urlRefreshGame));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

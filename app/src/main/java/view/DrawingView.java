@@ -264,4 +264,12 @@ public class DrawingView extends View {
             return null;
         }
     }
+
+    public int getDrawID() {
+        return drawID;
+    }
+
+    public void setDrawID(int drawID) {
+        this.drawID = drawID;
+    }
 }
