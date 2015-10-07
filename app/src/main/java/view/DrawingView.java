@@ -47,8 +47,6 @@ public class DrawingView extends View {
 
     private ArrayList<String[]> drawPoints;
 
-    //private HttpClient httpclient;
-
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
         //httpclient = new DefaultHttpClient();
@@ -158,9 +156,6 @@ public class DrawingView extends View {
         x = x/Controller.getInstance().getUser().getScreenWidth();
         y = y/Controller.getInstance().getUser().getScreenWidth();
 
-//        String s = "(" + String.valueOf(x) + "," + String.valueOf(y) + "," + String.valueOf(event_dif) + "," + String.valueOf(drawID) + ",'"
-//                + Controller.getInstance().getGame().getLobbyId() + "','" + colorString + "')";
-
         String[] s = {"[X]=" + String.valueOf(x), "[Y]=" + String.valueOf(y), "[Event]=" + String.valueOf(event_dif), "[Id]=" + String.valueOf(drawID),
                 "[LobbyId]=" + Controller.getInstance().getGame().getLobbyId(),"[Color]=" + colorString};
 
@@ -187,11 +182,7 @@ public class DrawingView extends View {
 
         values = values.substring(0, (values.length()-1));
 
-        Log.i("FU", "Statement: " + values);
-
         new DrawPointsTask().execute(values);
-
-
     }
 
     public void setColor(String newColor){
@@ -238,8 +229,6 @@ public class DrawingView extends View {
             //Execute-String
             String urlPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
                     + "&method=TestPoints&" + strings[0];
-
-            Log.i("FU", "URL: " + urlPoints);
 
             //Führt die GetFunktion aus
             try {

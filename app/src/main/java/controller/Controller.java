@@ -84,7 +84,7 @@ public class Controller {
         @Override
         public void run() {
             new AutoRefreshDataTask().execute();
-            handler.postDelayed(this, 2000);
+            handler.postDelayed(this, 500);
         }
     };
 

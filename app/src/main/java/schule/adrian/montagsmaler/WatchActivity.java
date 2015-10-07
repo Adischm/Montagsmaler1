@@ -83,7 +83,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                 Controller.getInstance().setLastPP(0);
             }
 
-            if (Controller.getInstance().getGame().getUsersReady() > 0) {
+            if (Controller.getInstance().getGame().getUsersReady() > 0 && infoDialog.isShowing()) {
 
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
