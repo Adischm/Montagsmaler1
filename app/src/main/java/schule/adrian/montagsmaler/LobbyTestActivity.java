@@ -269,7 +269,6 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
             //Zeigt den Dialog an
             newLobbyDialog.show();
         } else if(v.getId()==R.id.button_refresh) {
-
             thread_lobby.run();
         }
     }

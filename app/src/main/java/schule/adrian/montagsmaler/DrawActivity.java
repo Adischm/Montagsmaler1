@@ -342,5 +342,4 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         }
     });
 
-
 }
