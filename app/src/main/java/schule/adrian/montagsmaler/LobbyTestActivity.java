@@ -60,14 +60,14 @@ public class LobbyTestActivity extends AppCompatActivity implements View.OnClick
         this.button_refresh.setOnClickListener(this);
         this.lobbyNames = new ArrayList<String>();
 
-        //Setzt das Wait-Flag im Controller
+        /*//Setzt das Wait-Flag im Controller
         Controller.getInstance().setWait(1);
 
         //Ruft die Infos zu allen Lobbys ab, solange die Abfrage läuft, wird gewartet
         Controller.getInstance().getLobbys();
 
         //Wartet auf den Controller
-        while (Controller.getInstance().getWait() == 1) {}
+        while (Controller.getInstance().getWait() == 1) {}*/
 
         //Sobald der Controller den Wait-Wert auf 0 setzt, gehts weiter
         //Aus der Loby-Liste des Controllers werden die Lobby-Namen geholt

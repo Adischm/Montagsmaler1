@@ -6,6 +6,6 @@ package Data;
 public class Data {
 
     //Strings
-    //public static String SERVERIP = "192.168.43.226"; //Sven
-    public static String SERVERIP = "192.168.178.25"; //Fabi
+    public static String SERVERIP = "192.168.43.226"; //Sven
+    //public static String SERVERIP = "192.168.178.25"; //Fabi
 }

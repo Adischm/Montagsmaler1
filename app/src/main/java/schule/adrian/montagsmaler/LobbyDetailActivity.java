@@ -171,7 +171,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
             //TODO GetLobbys als AutoRefresh?
             //Startet den nächsten Task zum Abruf der Lobby-Daten
-            Controller.getInstance().getLobbys();
+            //Controller.getInstance().getLobbys();
 
             if (!gameStartsDialog.isShowing()) {
 

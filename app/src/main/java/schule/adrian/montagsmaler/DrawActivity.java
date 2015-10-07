@@ -77,6 +77,10 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void run() {
 
+            if (drawView.getDrawID() > 0) {
+                button_newword.setEnabled(false);
+            }
+
             if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
                 showInfoDialog("Es wurde gelöst!", "OK");
