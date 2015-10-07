@@ -25,14 +25,14 @@ public class User {
     private int isPainter;
     private int gameActive;
     private int isReady;
-
     private int screenWidth;
+
     //--- Ende Attribute ---
 
     //Konstruktor
     public User () {}
 
-    //Methode, die Attribute des Users setzt
+    //Methode, die die Attribute des Users setzt
     public void createUser (String id, String name, String currentLobbyId, int isLobbyOwner) {
 
         this.id = id;

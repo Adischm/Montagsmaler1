@@ -2,18 +2,13 @@ package controller;
 
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.util.Log;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.HttpParams;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,7 +24,10 @@ import model.PicturePart;
 import model.User;
 
 /**
- * Kontroll-Klasse
+ * Controller-Klasse
+ * Der Controller instanziert User und Game, führt einen Großteil der Get-Funktionen aus
+ * und holt per Refresh-Task kontinuierlich aktuelle Daten aus der DB
+ *
  */
 public class Controller {
 
@@ -68,8 +66,6 @@ public class Controller {
     public Controller(){
 
         this.pParts = new ArrayList<PicturePart>();
-        //this.user = new User();
-        //this.game = new Game();
 
         this.user = User.getInstance();
         this.game = Game.getInstance();
@@ -77,16 +73,33 @@ public class Controller {
 
         //Handler, der die Refresh-Runnable aufruft
         handler = new Handler();
-        handler.postDelayed(refreshRunnable, 2000);
+        handler.postDelayed(refreshRunnable, 500);
     }
 
+    /**
+     * RunnableObjekt, das kontinuierlich Refresh-Tasks in einem eigenen Thread startet
+     */
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            new AutoRefreshDataTask().execute();
+            refreshThread.run();
             handler.postDelayed(this, 500);
         }
     };
+
+    /**
+     * Thread, der den RefreshTask aufruft
+     */
+    Thread refreshThread = new Thread(new Runnable(){
+        @Override
+        public void run() {
+            try {
+                new AutoRefreshDataTask().execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    });
 
     /**
      * Holt Lobbys per AsyncTask aus der DB
@@ -114,22 +127,31 @@ public class Controller {
     }
 
     /**
-     *
+     * Erzeugt das Game-Objekt per AsyncTask
+     * @param lobbyId
      */
     public void createGame(String lobbyId) {
 
         game.setLobbyId(lobbyId);
 
-        Log.i("FU", "CreateGame LobbyID: " + game.getLobbyId());
-
         new CreateGameTask().execute(lobbyId);
     }
 
+    /**
+     * Setzt den GameActive-Status für alle User einer Lobby per AsyncTask
+     * @param array
+     * -> LobbyId, Status
+     */
     public void setGameActive(String[] array) {
 
         new SetGameActiveTask().execute(array);
     }
 
+    /**
+     * Resettet ein Game für eine neue Spielrunde per AsyncTask
+     * Setzt: User-ReadyStates, MalerId, NextMalerId, Resolved, isPainter
+     * @param state
+     */
     public void resetGame(String state) {
 
         String[] array = {game.getLobbyId(), state};
@@ -137,21 +159,35 @@ public class Controller {
         new ResetGameTask().execute(array);
     }
 
+    /**
+     * Setzt das Game auf "gelöst" und übergibt den nächsten Maler per AsyncTask
+     * @param nextPainter
+     * @param state
+     */
     public void setResolved(String nextPainter, String state) {
 
         new SetResolvedTask().execute(nextPainter, state);
     }
 
+    /**
+     * Setzt den ReadyState eines Users per AsyncTask
+     */
     public void setUserReady() {
 
         new SetUserReadyTask().execute();
     }
 
+    /**
+     * Löscht die Bild-Koordinaten einer Lobby per AsyncTask
+     */
     public void truncateCoordinates() {
 
         new TruncateCoordinatesTask().execute();
     }
 
+    /**
+     * Legt einen neuen, zufälligen Malbegriff per AsyncTask fest
+     */
     public void updateWord() {
 
         new UpdateWordTask().execute();
@@ -264,150 +300,6 @@ public class Controller {
     }
 
     /**
-     * Holt per HttpGet die Daten aller Lobbys inkl. der zugeordneten User aus der DB
-     * Erstellt daraus Lobby-Objekte und fügt diese der LobbyListe hinzu
-     *//*
-    private class GetLobbysTask extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            //Die Liste wird zunächst geleert
-            lobbyList.clear();
-
-            HttpClient httpclient = new DefaultHttpClient();
-
-            //HttpResponse
-            HttpResponse response = null;
-
-            //Execute-String
-            String urlGetAllLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getAllLobbyFromDb";
-
-            //Führt die GetFunktion aus
-            try {
-                response = httpclient.execute(new HttpGet(urlGetAllLobby));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            StatusLine statusLine = response.getStatusLine();
-
-            if(statusLine.getStatusCode() == HttpStatus.SC_OK) {
-
-                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                try {
-                    response.getEntity().writeTo(out);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                String responseString = out.toString();
-
-                try {
-                    response.getEntity().consumeContent();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //httpclient.getConnectionManager().shutdown();
-
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                //Erzeugt aus dem Antwort-String ein JSON-Objekt
-                try {
-                    JSONObject jsonObject = new JSONObject(responseString);
-                    JSONArray ja = jsonObject.getJSONArray("data");
-
-                    //Aus dem Data-Array werden die LobbyIDs extrahiert und damit die zugehörigen User aus der DB geholt
-                    for (int i = 0; i < ja.length(); i++) {
-                        JSONArray jaa = ja.getJSONArray(i);
-
-                        //ArrayList für User
-                        ArrayList<String> lobbyUsers = new ArrayList<String>();
-
-                        //HttpResponse
-                        HttpResponse userResponse = null;
-
-                        //Execute-String
-                        String urlGetAllUserForLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=getAllUserForLobbyId&LobbyId=" + jaa.get(0);
-
-                        //Führt die GetFunktion aus
-                        try {
-                            userResponse = httpclient.execute(new HttpGet(urlGetAllUserForLobby));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        StatusLine userStatusLine = userResponse.getStatusLine();
-
-                        if(userStatusLine.getStatusCode() == HttpStatus.SC_OK) {
-
-                            //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                            ByteArrayOutputStream userOut = new ByteArrayOutputStream();
-
-                            try {
-                                userResponse.getEntity().writeTo(userOut);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            String userResponseString = userOut.toString();
-
-                            try {
-                                response.getEntity().consumeContent();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            //httpclient.getConnectionManager().shutdown();
-
-                            try {
-                                userOut.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            //Erzeugt aus dem Antwort-String ein JSON-Objekt
-                            try {
-                                JSONObject userJsonObject = new JSONObject(userResponseString);
-                                JSONArray uja = userJsonObject.getJSONArray("data");
-
-                                for (int j = 0; j < uja.length(); j++) {
-                                    JSONArray ujaa = uja.getJSONArray(j);
-
-                                    //Aus dem Data-Array werden die User extrahiert und der User-Liste zugefügt
-                                    //Lobby-Owner werden markiert
-                                    if ((Integer)ujaa.get(2) == 1) {
-                                        lobbyUsers.add((String) ujaa.get(1) + " (Owner)");
-                                    } else {
-                                        lobbyUsers.add((String) ujaa.get(1));
-                                    }
-                                }
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        //Mit den Daten aus beiden Get-Aufrufen wird eine Lobby erstellt und der Lobby-Liste zugefügt
-                        Lobby lobby = new Lobby((String)jaa.get(0), (String)jaa.get(1), lobbyUsers);
-                        lobbyList.add(lobby);
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
-            wait = 0;
-            return null;
-        }
-    }*/
-
-    /**
      * Holt per HttpGet die Daten des eingeloggten Users und übergibt diese an das User-Objekt
      */
     private class SetUserTask extends AsyncTask<String, Void, Void> {
@@ -453,7 +345,6 @@ public class Controller {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -486,8 +377,6 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            //httpclient.getConnectionManager().shutdown();
 
             //Aktiviert die Refresh-Schleife für den User
             refreshUser = 1;
@@ -545,7 +434,6 @@ public class Controller {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -570,13 +458,16 @@ public class Controller {
                 }
             }
 
+            //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
             pictureWait = 0;
+
             return null;
         }
     }
 
     /**
-     *
+     * Erzeugt per HttpGet ein Gameobject in der DB.
+     * Liefert die ID des neuen Games, den ersten Malbegriff sowie die zugehörigen User zurück
      */
     private class CreateGameTask extends AsyncTask<String, Void, Void> {
 
@@ -620,7 +511,6 @@ public class Controller {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -674,10 +564,10 @@ public class Controller {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            //httpclient.getConnectionManager().shutdown();
                         }
                     }
 
+                    //Aktiviert die Refresh-Schleife für das Game
                     refreshGame = 1;
 
                 } catch (JSONException e) {
@@ -690,7 +580,7 @@ public class Controller {
     }
 
     /**
-     *
+     * Setzt per HttpGet die GameActive States aller Spieler einer Lobby
      */
     private class SetGameActiveTask extends AsyncTask<String, Void, Void> {
 
@@ -711,14 +601,14 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //httpclient.getConnectionManager().shutdown();
 
             return null;
         }
     }
 
     /**
-     *
+     * Resettet per HttpGet ein Game für eine neue Spielrunde
+     * Setzt: User-ReadyStates, MalerId, NextMalerId, Resolved, isPainter
      */
     private class ResetGameTask extends AsyncTask<String, Void, Void> {
 
@@ -731,8 +621,11 @@ public class Controller {
             String state = strings[1];
             String painter = "";
 
+            //Gibt es noch keinen NextPainter (= 1. Runde), dann wird der ausführende Spieler (= der erste Maler) zum Painter im Gameobjekt
             if (game.getNextPainterId().equals("")) {
                 painter = user.getId();
+
+            //Anderfalls wird die NextPainterId als Maler hinterlegt
             } else {
                 painter = game.getNextPainterId();
             }
@@ -748,14 +641,12 @@ public class Controller {
                 e.printStackTrace();
             }
 
-            //httpclient.getConnectionManager().shutdown();
-
             return null;
         }
     }
 
     /**
-     *
+     * Setzt per HttpGet den ResolvedStatus eines Games und übergibt die ID des Lösers (-> er wird nächster Maler)
      */
     private class SetResolvedTask extends AsyncTask<String, Void, Void> {
 
@@ -777,8 +668,6 @@ public class Controller {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            //httpclient.getConnectionManager().shutdown();
 
             return null;
         }
@@ -805,8 +694,6 @@ public class Controller {
                 e.printStackTrace();
             }
 
-            //httpclient.getConnectionManager().shutdown();
-
             return null;
         }
     }
@@ -832,14 +719,12 @@ public class Controller {
                 e.printStackTrace();
             }
 
-            //httpclient.getConnectionManager().shutdown();
-
             return null;
         }
     }
 
     /**
-     *
+     * Ersetzt den Malbegriff per HttpGet durch einen zufälligen neuen und gibt das neue Wort zurück
      */
     private class UpdateWordTask extends AsyncTask<Void, Void, Void> {
 
@@ -881,7 +766,6 @@ public class Controller {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //httpclient.getConnectionManager().shutdown();
 
                 try {
                     out.close();
@@ -894,7 +778,7 @@ public class Controller {
                     JSONObject jsonObject = new JSONObject(responseString);
                     JSONArray ja = jsonObject.getJSONArray("data");
 
-                    //Extrahiert GameId und ActiveWord aus data
+                    //Extrahiert ActiveWord aus data
                     game.setActiveWord((String) ja.get(0));
 
                 } catch (JSONException e) {
@@ -902,14 +786,16 @@ public class Controller {
                 }
             }
 
+            //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
             wordWait = 0;
+
             return null;
         }
     }
 
     /**
      *
-     */
+     *//*
     private class AutoRefreshDataTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -1054,6 +940,164 @@ public class Controller {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                }
+            }
+
+            return null;
+        }
+    }*/
+
+
+    /**
+     * Der Autorefresh-Task läuft kontinuierlich im Hintegrund und aktualisiert ständig die Lobby-, User- und Game-Daten
+     */
+    private class AutoRefreshDataTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            String lobbyId;
+            String userId;
+            ArrayList<Lobby> tempLobbyList = new ArrayList<Lobby>();
+
+            //Erzeugt einen Dummy-String, für den Fall, dass noch kein User existiert
+            if (refreshUser == 1) {
+                userId = user.getId();
+            } else {
+                userId = "a";
+            }
+
+            //Erzeugt einen Dummy-String, für den Fall, dass noch kein Game existiert
+            if (refreshGame == 1) {
+                lobbyId = game.getLobbyId();
+            } else {
+                lobbyId = "a";
+            }
+
+            HttpClient refreshHttpClient = new DefaultHttpClient();
+
+            //HttpResponse
+            HttpResponse refreshResponse = null;
+
+            //Execute-String
+            String urlRefreshData = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=RefreshData&LobbyId=" + lobbyId + "&UserId=" + userId;
+
+            //Führt die GetFunktion aus
+            try {
+                refreshResponse = refreshHttpClient.execute(new HttpGet(urlRefreshData));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            StatusLine statusLine = refreshResponse.getStatusLine();
+
+            if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                try {
+                    refreshResponse.getEntity().writeTo(out);
+                    refreshResponse.getEntity().consumeContent();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String responseString = out.toString();
+
+
+                try {
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                    JSONObject jsonObject = new JSONObject(responseString);
+
+
+                    //--- Anfang Lobby Daten ---
+                    //Erzeugt ein Lobby-Daten-Array aus "lobbydata"
+                    JSONArray lobbyDataArray = jsonObject.getJSONArray("lobbydata");
+
+                    //Aus dem Data-Array werden die LobbyIDs extrahiert und damit die zugehörigen User aus der DB geholt
+                    for (int i = 0; i < lobbyDataArray.length(); i++) {
+
+                        //Array mit den Daten einer Lobby
+                        JSONArray oneLobbyArray = lobbyDataArray.getJSONArray(i);
+
+                        //Inneres Array mit den Usern einer Lobby
+                        JSONArray lobbyUsersArray = oneLobbyArray.getJSONArray(4);
+
+                        //ArrayList für User
+                        ArrayList<String> lobbyUsers = new ArrayList<String>();
+
+                        for (int k = 0; k < lobbyUsersArray.length(); k++) {
+
+                            //Inneres Array mit den Daten eines Users
+                            JSONArray oneUserArray = lobbyUsersArray.getJSONArray(k);
+
+                            //Die User einer Lobby werden der User-Liste zugefügt
+                            //Lobby-Owner werden markiert
+                            if ((Integer) oneUserArray.get(2) == 1) {
+                                lobbyUsers.add((String) oneUserArray.get(1) + " (Owner)");
+                            } else {
+                                lobbyUsers.add((String) oneUserArray.get(1));
+                            }
+                        }
+
+                        //Mit den Daten wird eine Lobby erstellt und der temporären Lobby-Liste zugefügt
+                        Lobby lobby = new Lobby((String) oneLobbyArray.get(0), (String) oneLobbyArray.get(1), lobbyUsers);
+                        tempLobbyList.add(lobby);
+                    }
+
+                    //Die "echte" LobbyListe wird aktualisiert
+                    lobbyList.clear();
+                    lobbyList = tempLobbyList;
+
+                    //--- Ende Lobby Daten ---
+
+                    //--- Anfang User Daten ---
+                    if (refreshUser == 1) {
+
+                        //Erzeugt ein User-Daten-Array aus "userdata"
+                        JSONArray userDataArray = jsonObject.getJSONArray("userdata");
+
+                        //Übergibt die Daten an das User-Objekt
+                        user.setCurrentLobbyId((String) userDataArray.get(0));
+                        user.setIsLobbyOwner((Integer) userDataArray.get(1));
+                        user.setIsPainter((Integer) userDataArray.get(2));
+                        user.setGameActive((Integer) userDataArray.get(3));
+                    }
+
+                    //--- Ende User Daten ---
+
+                    //--- Anfang Game Daten ---
+                    if (refreshGame == 1) {
+
+                        //Erzeugt ein Game-Daten-Array aus "gamedata"
+                        JSONArray gameDataArray = jsonObject.getJSONArray("gamedata");
+
+                        //Übergibt die Daten an das GameObjekt
+                        game.setId((String) gameDataArray.get(0));
+                        game.setPainterId((String) gameDataArray.get(1));
+                        game.setNextPainterId((String) gameDataArray.get(2));
+                        game.setIsSolved((Integer) gameDataArray.get(3));
+                        game.setActiveWord((String) gameDataArray.get(4));
+                        game.setUsersReady((Integer) gameDataArray.get(5));
+
+                        //Bildet ein inneres Array aus dem gamedata-Array mit UserIds
+                        JSONArray gameUserArray = gameDataArray.getJSONArray(6);
+
+                        game.getUserIds().clear();
+
+                        //Übergibt die UserIds an das Game-Objekt
+                        for (int i = 0; i < gameUserArray.length(); i++) {
+
+                            game.getUserIds().add((String) gameUserArray.get(i));
+                        }
+                    }
+
+                    //--- Ende Game Daten ---
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
 

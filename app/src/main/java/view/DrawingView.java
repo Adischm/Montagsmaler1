@@ -228,7 +228,7 @@ public class DrawingView extends View {
 
             //Execute-String
             String urlPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
-                    + "&method=TestPoints&" + strings[0];
+                    + "&method=DrawArrayPoints&" + strings[0];
 
             //Führt die GetFunktion aus
             try {

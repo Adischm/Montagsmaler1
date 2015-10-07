@@ -3,7 +3,7 @@ package model;
 import java.util.ArrayList;
 
 /**
- *
+ * Klasse für das Game-Objekt
  */
 public class Game {
 
@@ -47,6 +47,7 @@ public class Game {
         this.userIds = new ArrayList<String>();
     }
 
+    //Getter & Setter
     public String getId() {
         return id;
     }

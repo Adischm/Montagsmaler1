@@ -16,8 +16,12 @@ import android.widget.TextView;
 import controller.Controller;
 import view.DrawingView;
 
+/**
+ * Die DrawActivity ist der Bildschirm zum Malen
+ */
 public class DrawActivity extends AppCompatActivity implements View.OnClickListener {
 
+    //--- Start Attribute ---
     private DrawingView drawView;
     private ImageButton button_erase, currPaint;
     private Button button_newword, button_cancelround;
@@ -29,18 +33,31 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     private Handler startHandler;
     private int stopHandler;
 
+    //--- Ende Attribute ---
+
     @Override
+    /**
+     * Konstruktor
+     */
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Setzt die Layout XML
         setContentView(R.layout.activity_draw);
 
+        //Setzt das Bild der Start-Farbe (=schwarz) als "gedrückt"
         LinearLayout paintLayout = (LinearLayout)findViewById(R.id.paint_colors);
         currPaint = (ImageButton)paintLayout.getChildAt(5);
         currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
 
+        //Instanziert das Malfeld
         this.drawView = (DrawingView)findViewById(R.id.drawing);
+
+        //Setzt die Größe des Malfelds anhand der ermittelten Bildschirm-Breite
         this.drawView.getLayoutParams().width = Controller.getInstance().getUser().getScreenWidth();
         this.drawView.getLayoutParams().height = Controller.getInstance().getUser().getScreenWidth();
+
+        //Instanziert Buttons und Dialoge
         this.button_erase = (ImageButton)findViewById(R.id.erase_btn);
         this.button_erase.setOnClickListener(this);
         this.button_newword = (Button) findViewById(R.id.button_newword);
@@ -50,6 +67,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         this.infoDialog = new Dialog(this);
         this.cancelDialog = new Dialog(this);
         this.startDialog = new Dialog(this);
+
         this.stopHandler = 0;
 
         //Setzt das Lösungswort als Text auf dem Screen
@@ -72,50 +90,70 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         startHandler.postDelayed(startRunnable, 2000);
     }
 
-
+    /**
+     * Runnable-Objekt das kontinuierlich aufgerufen wird
+     * Hier wird geprüft ob diverse Stati ein Ereignis auslösen müssen
+     */
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
 
+            //Deaktiviert den "Neues-Wort-Button", sobald mit dem Malen begonnen wurde
             if (drawView.getDrawID() > 0) {
                 button_newword.setEnabled(false);
             }
 
+            //Bei Game-Status "gelöst" wird der Info-Dialog geöffnet (falls er nicht schon angezeigt wird)
             if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
+                //Zeigt den Info-Dialog
                 showInfoDialog("Es wurde gelöst!", "OK");
+
+            //IsSolved-Status 2 wird genutzt, wenn der Maler die Runde abbrechen will. Ist das der Fall, wird der Info-Dialog geöffnet
             } else if (Controller.getInstance().getGame().getIsSolved() == 2 && !infoDialog.isShowing()) {
 
+                //Schliesst den Cancel-Dialog bei Bedarf
                 if (cancelDialog.isShowing()) {
                     cancelDialog.dismiss();
                 }
 
+                //Zeigt den Info-Dialog
                 showInfoDialog("Nächste Runde?", "Bereit");
             }
 
+            //Status-Prüfung, die ggf. in eine neue Activity wechselt (-> neue Runde)
+            //Prüft zunächst, ob es User mit Status "Ready" gibt
             if (Controller.getInstance().getGame().getUsersReady() > 0) {
 
+                //Prüft dann, ob alle User "Ready" sind
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
+                    //Falls der Info-Dialog angezeigt wird, wird er geschlossen
                     if (infoDialog.isShowing()) {
                         infoDialog.dismiss();
                     }
 
+                    //Prüft, ob es sich beim User um den Maler der nächsten Runde handelt
                     if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
 
-                        //Der naächste Maler wechselt nun in die Draw View
+                        //Der nächste Maler wechselt nun in die Draw Activity
                         thread_draw.run();
+
+                        //Stoppt den Handler
                         stopHandler = 1;
 
                     } else {
 
-                        //Der Rest wechselt in die Watch View
+                        //Der Rest wechselt in die Watch Activity
                         thread_watch.run();
+
+                        //Stoppt den Handler
                         stopHandler = 1;
                     }
                 }
             }
 
+            //Solange der Handler nicht gestoppt wurde, ruft er die RefreshRunnable erneut auf
             if (stopHandler == 0) {
 
                 handler.postDelayed(this, 100);
@@ -123,15 +161,21 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    /**
+     * Runnable-Objekt, das kurz nach dem Start der Runde diverse Stati (die sonst gleich wieder Ereignisse auslösen würden) resettet
+     */
     private Runnable resetGameRunnable = new Runnable() {
         @Override
         public void run() {
 
-            //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
+            //Ruft über den Controller einen Task auf, der u.a. alle isReadyStates der User wieder auf null setzt
             Controller.getInstance().resetGame("0");
         }
     };
 
+    /**
+     * Runnable-Objekt, das den Start-Dialog schließt
+     */
     private Runnable startRunnable = new Runnable() {
         @Override
         public void run() {
@@ -142,13 +186,23 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+    /**
+     * Methode, die bei Click eine Farbe an die DrawView übergibt
+     * @param view
+     */
     public void paintClicked(View view){
-        //use chosen color
+
         if(view!=currPaint){
-            //update color
+
             ImageButton imgView = (ImageButton)view;
+
+            //Holt den Farbcode vom ImageButton
             String color = view.getTag().toString();
+
+            //Übergibt die Farbe
             drawView.setColor(color);
+
+            //Setzt das Bild der Farbe als "gedrückt"
             imgView.setImageDrawable(getResources().getDrawable(R.drawable.paint_pressed));
             currPaint.setImageDrawable(getResources().getDrawable(R.drawable.paint));
             currPaint=(ImageButton)view;
@@ -182,41 +236,62 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     public void onBackPressed() {}
 
     @Override
+    /**
+     * Erfasst und verarbeitet Clicks auf die Buttons der Activity
+     */
     public void onClick(View view){
-        //respond to clicks
+
+        //Button "Löschen"
         if(view.getId()==R.id.erase_btn){
 
+            //Löscht das Bild in der >View
             drawView.deletePainting();
 
+        //Button "Neues Wort"
         } else if(view.getId()==R.id.button_newword){
 
+            //Deaktiviert den Button (-> darf nur 1x pro Runde gemacht werden)
             button_newword.setEnabled(false);
 
+            //Holt über den Controller ein neues Wort
             Controller.getInstance().setWordWait(1);
             Controller.getInstance().updateWord();
 
+            //Wartet, bis der Controller das neue Wort per HttpGet aus der DB geholt hat
             while (Controller.getInstance().getWordWait() == 1) {}
 
             //Setzt das Lösungswort als Text auf dem Screen
             final TextView mTextView = (TextView) findViewById(R.id.textView_solvingWord);
             mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
 
+        //Button "Abbrechen"
         } else if(view.getId()==R.id.button_cancelround){
 
+            //Öffnet den Abbrechen-Dialog
             showCancelDialog();
         }
     }
 
+    /**
+     * Methode die den Info-Dialog aufruft
+     * @param text
+     * @param btnText
+     */
     public void showInfoDialog(String text, String btnText) {
 
         //Ordnet dem Dialog ein Layout zu
         infoDialog.setContentView(R.layout.draw_info_dialog);
 
+        //Instanziert eine Textanzeige
         final TextView infoTextView = (TextView)infoDialog.findViewById(R.id.tv_infotext);
+
+        //Setzt den übergebenen Text
         infoTextView.setText(text);
 
         //Instanziert einen Button für den Dialog
         final Button smallBtn = (Button)infoDialog.findViewById(R.id.info_btn);
+
+        //Setzt den übergebenen Button-Text
         smallBtn.setText(btnText);
 
         //Definiert einen Listener für den Button
@@ -225,18 +300,27 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View v) {
 
+                //Bei Click auf "OK"
                 if (smallBtn.getText().equals("OK")) {
 
+                    //Setzt neue Texte
                     infoTextView.setText("Nächste Runde?");
                     smallBtn.setText("Bereit");
 
+                //Bei Click auf "Bereit"
                 } else if (smallBtn.getText().equals("Bereit")){
+
+                    //Blendet den Button aus
                     smallBtn.setEnabled(false);
                     smallBtn.setVisibility(View.INVISIBLE);
+
+                    //Zeigt "Bitte warten..." an
                     infoTextView.setText("Bitte warten...");
 
+                    //Löscht die Bild-Daten des Games
                     Controller.getInstance().truncateCoordinates();
 
+                    //Setzt den Status des Users auf "Ready"
                     Controller.getInstance().setUserReady();
                 }
 
@@ -247,11 +331,15 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         infoDialog.show();
     }
 
+    /**
+     * Methode die den Abbrechen-Dialog aufruft
+     */
     public void showCancelDialog() {
 
         //Ordnet dem Dialog ein Layout zu
         cancelDialog.setContentView(R.layout.draw_cancel_dialog);
 
+        //Instanziert eine Textanzeige
         final TextView infoTextView = (TextView)cancelDialog.findViewById(R.id.tv_infotext);
 
         //Instanziert Buttons für den Dialog
@@ -280,17 +368,22 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
 
+                //Zeigt "Bitte warten..." an
                 infoTextView.setText("Bitte warten...");
+
+                //Blendet die Buttons aus
                 yesButton.setVisibility(View.INVISIBLE);
                 noButton.setVisibility(View.INVISIBLE);
             }
         });
 
+        //Definiert einen Listener für den Nein-Button
         noButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
 
+                //Schliesst den Dialog
                 cancelDialog.dismiss();
             }
         });
@@ -299,6 +392,9 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         cancelDialog.show();
     }
 
+    /**
+     * Methode die den Start-Dialog aufruft
+     */
     public void showStartDialog() {
 
         //Ordnet dem Dialog ein Layout zu
@@ -341,5 +437,4 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     });
-
 }
