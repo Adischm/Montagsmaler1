@@ -142,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 String responseString = out.toString();
 
+                Log.i("FU", "Response" + responseString);
+
                 try {
                     JSONObject jsonObject = new JSONObject(responseString);
                     String jsonResponse = jsonObject.getString("validationStatus");

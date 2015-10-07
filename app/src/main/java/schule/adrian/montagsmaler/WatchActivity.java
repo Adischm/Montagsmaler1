@@ -22,9 +22,12 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private EditText editText_solvingWord;
     private Button button_Guess;
     private Handler handler;
+    private Handler startHandler;
     private Dialog infoDialog;
+    private Dialog startDialog;
     private int stopHandler;
     private int stopWatching;
+    private String word;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,12 +41,21 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         this.button_Guess = (Button) findViewById(R.id.button_Guess);
         this.button_Guess.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
+        this.startDialog = new Dialog(this);
         this.stopHandler = 0;
         this.stopWatching = 0;
+        this.word = Controller.getInstance().getGame().getActiveWord();
+
+        //Zeigt einen Start-Dialog an, er wird per Handler automatisch geschlossen
+        showStartDialog();
 
         //Handler, der die Refresh-DrawPoints Runnable aufruft
         this.handler = new Handler();
         handler.postDelayed(refreshRunnable, 4000);
+
+        //Handler, der den Start-Dialog schließt
+        this.startHandler = new Handler();
+        startHandler.postDelayed(startRunnable, 2000);
     }
 
     private Runnable refreshRunnable = new Runnable() {
@@ -59,15 +71,25 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                 showInfoDialog("Es wurde gelöst!", "OK", 1);
                 stopWatching = 1;
                 Controller.getInstance().setLastPP(0);
+
+            } else if (Controller.getInstance().getGame().getIsSolved() == 2 && !infoDialog.isShowing()) {
+
+                showInfoDialog("Es wurde abgebrochen!\nDie Lösung war: " + word, "OK", 1);
+                stopWatching = 1;
+                Controller.getInstance().setLastPP(0);
             }
 
             if (Controller.getInstance().getGame().getUsersReady() > 0) {
 
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
 
+                    if (infoDialog.isShowing()) {
+                        infoDialog.dismiss();
+                    }
+
                     if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
 
-                        //Der naächste Maler wechselt nun in die Draw View
+                        //Der nächste Maler wechselt nun in die Draw View
                         thread_draw.run();
 
                         stopHandler = 1;
@@ -84,6 +106,16 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             if (stopHandler == 0) {
 
                 handler.postDelayed(this, 100);
+            }
+        }
+    };
+
+    private Runnable startRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            if (startDialog.isShowing()) {
+                startDialog.dismiss();
             }
         }
     };
@@ -110,17 +142,19 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         return super.onOptionsItemSelected(item);
     }
 
+    //Die Zurück-Taste soll nichts machen
+    @Override
+    public void onBackPressed() {}
+
     @Override
     public void onClick(View v) {
         if(v == button_Guess){
             String solvingWord = editText_solvingWord.getText().toString().toLowerCase();
 
-            Log.i("FU", "VorMethode LobbyId: " + Controller.getInstance().getGame().getLobbyId());
-
             if (solvingWord.equals(Controller.getInstance().getGame().getActiveWord())) {
 
                 //Ruft über den Controller einen Task auf, der Resolved und nextPainter in der DB setzt
-                Controller.getInstance().setResolved();
+                Controller.getInstance().setResolved(Controller.getInstance().getUser().getId(), "1");
 
                 showInfoDialog("Die Lösung ist richtig!\nDu bist der nächste Maler", "OK", 1);
 
@@ -166,12 +200,20 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                     infoTextView.setText("Bitte warten...");
                     Controller.getInstance().setUserReady();
                 }
-
             }
         });
 
         //Zeigt den Dialog an
         infoDialog.show();
+    }
+
+    public void showStartDialog() {
+
+        //Ordnet dem Dialog ein Layout zu
+        startDialog.setContentView(R.layout.watch_start_dialog);
+
+        //Zeigt den Dialog an
+        startDialog.show();
     }
 
     public void watchPainting(){

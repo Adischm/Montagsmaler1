@@ -22,8 +22,11 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton button_erase, currPaint;
     private Button button_newword, button_cancelround;
     private Dialog infoDialog;
+    private Dialog cancelDialog;
+    private Dialog startDialog;
     private Handler handler;
     private Handler resetHandler;
+    private Handler startHandler;
     private int stopHandler;
 
     @Override
@@ -45,14 +48,16 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         this.button_cancelround = (Button) findViewById(R.id.button_cancelround);
         this.button_cancelround.setOnClickListener(this);
         this.infoDialog = new Dialog(this);
+        this.cancelDialog = new Dialog(this);
+        this.startDialog = new Dialog(this);
         this.stopHandler = 0;
 
         //Setzt das Lösungswort als Text auf dem Screen
         final TextView mTextView = (TextView) findViewById(R.id.textView_solvingWord);
         mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
 
-        //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
-        //Controller.getInstance().resetGame("0");
+        //Zeigt einen Start-Dialog an, er wird per Handler automatisch geschlossen
+        showStartDialog();
 
         //Handler, der die RefreshRunnable aufruft (in Intervallen)
         this.handler = new Handler();
@@ -61,6 +66,10 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         //Handler, der die ResetGameRunnable aufruft (1x)
         this.resetHandler = new Handler();
         resetHandler.postDelayed(resetGameRunnable, 2000);
+
+        //Handler, der den Start-Dialog schließt
+        this.startHandler = new Handler();
+        startHandler.postDelayed(startRunnable, 2000);
     }
 
 
@@ -71,11 +80,22 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
             if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
                 showInfoDialog("Es wurde gelöst!", "OK");
+            } else if (Controller.getInstance().getGame().getIsSolved() == 2 && !infoDialog.isShowing()) {
+
+                if (cancelDialog.isShowing()) {
+                    cancelDialog.dismiss();
+                }
+
+                showInfoDialog("Nächste Runde?", "Bereit");
             }
 
             if (Controller.getInstance().getGame().getUsersReady() > 0) {
 
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {
+
+                    if (infoDialog.isShowing()) {
+                        infoDialog.dismiss();
+                    }
 
                     if (Controller.getInstance().getUser().getId().equals(Controller.getInstance().getGame().getNextPainterId())) {
 
@@ -105,6 +125,16 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
             //Ruft über den Controller einen Task auf, der alle isReadyStates der User wieder auf null setzt
             Controller.getInstance().resetGame("0");
+        }
+    };
+
+    private Runnable startRunnable = new Runnable() {
+        @Override
+        public void run() {
+
+            if (startDialog.isShowing()) {
+                startDialog.dismiss();
+            }
         }
     };
 
@@ -143,15 +173,33 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
+    //Die Zurück-Taste soll nichts machen
+    @Override
+    public void onBackPressed() {}
+
     @Override
     public void onClick(View view){
         //respond to clicks
         if(view.getId()==R.id.erase_btn){
+
             drawView.deletePainting();
+
         } else if(view.getId()==R.id.button_newword){
-            drawView.deletePainting();
+
+            button_newword.setEnabled(false);
+
+            Controller.getInstance().setWordWait(1);
+            Controller.getInstance().updateWord();
+
+            while (Controller.getInstance().getWordWait() == 1) {}
+
+            //Setzt das Lösungswort als Text auf dem Screen
+            final TextView mTextView = (TextView) findViewById(R.id.textView_solvingWord);
+            mTextView.setText("Begriff: " + Controller.getInstance().getGame().getActiveWord());
+
         } else if(view.getId()==R.id.button_cancelround){
-            drawView.deletePainting();
+
+            showCancelDialog();
         }
     }
 
@@ -193,6 +241,67 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
         //Zeigt den Dialog an
         infoDialog.show();
+    }
+
+    public void showCancelDialog() {
+
+        //Ordnet dem Dialog ein Layout zu
+        cancelDialog.setContentView(R.layout.draw_cancel_dialog);
+
+        final TextView infoTextView = (TextView)cancelDialog.findViewById(R.id.tv_infotext);
+
+        //Instanziert Buttons für den Dialog
+        final Button yesButton = (Button)cancelDialog.findViewById(R.id.yes_btn);
+        final Button noButton = (Button)cancelDialog.findViewById(R.id.no_btn);
+
+        //Definiert einen Listener für den Ja-Button
+        yesButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                //Erzeugt eine Zufallszahl mit max = Anzahl User
+                //Mit dieser Zahl wird der nächste Maler festgelegt
+                int randomInt = (int)(Math.random() * Controller.getInstance().getGame().getUserIds().size());
+
+                //Übergibt den GameActive Status und nextPainter an die DB
+                for (int i = 0; i < Controller.getInstance().getGame().getUserIds().size(); i++) {
+
+                    //Bei match mit der Zufallszahl: isPainter = 1 ...
+                    if (i == randomInt) {
+
+                        //Ruft über den Controller einen Task auf, der Resolved und nextPainter in der DB setzt
+                        Controller.getInstance().setResolved(Controller.getInstance().getGame().getUserIds().get(i), "2");
+
+                    }
+                }
+
+                infoTextView.setText("Bitte warten...");
+                yesButton.setVisibility(View.INVISIBLE);
+                noButton.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        noButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                cancelDialog.dismiss();
+            }
+        });
+
+        //Zeigt den Dialog an
+        cancelDialog.show();
+    }
+
+    public void showStartDialog() {
+
+        //Ordnet dem Dialog ein Layout zu
+        startDialog.setContentView(R.layout.draw_start_dialog);
+
+        //Zeigt den Dialog an
+        startDialog.show();
     }
 
     //Methoden zum Wechsel der Activity

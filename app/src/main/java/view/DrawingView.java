@@ -13,14 +13,26 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
-import Data.Data;
 import controller.Controller;
+import Data.Data;
 
 
 public class DrawingView extends View {
@@ -44,11 +56,16 @@ public class DrawingView extends View {
 
     private String colorString = "FF000000";
 
+    private ArrayList<String[]> drawPoints;
+
     //private HttpClient httpclient;
 
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
         //httpclient = new DefaultHttpClient();
+
+        this.drawPoints = new ArrayList<String[]>();
+
         setupDrawing();
     }
 
@@ -133,7 +150,7 @@ public class DrawingView extends View {
         invalidate();
     }
 
-    public void postXY(float x, float y, int event_dif, int drawID) {
+    /*public void postXY(float x, float y, int event_dif, int drawID) {
 
         x = x/Controller.getInstance().getUser().getScreenWidth();
         y = y/Controller.getInstance().getUser().getScreenWidth();
@@ -144,16 +161,53 @@ public class DrawingView extends View {
                                 + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId()
                                 + "&color=" + colorString;
 
-        Log.i("FU", "url: " + urlDrawPoints);
-
         new DrawPointsTask().execute(urlDrawPoints);
+    }*/
+
+    public void postXY(float x, float y, int event_dif, int drawID) {
+
+        x = x/Controller.getInstance().getUser().getScreenWidth();
+        y = y/Controller.getInstance().getUser().getScreenWidth();
+
+//        String s = "(" + String.valueOf(x) + "," + String.valueOf(y) + "," + String.valueOf(event_dif) + "," + String.valueOf(drawID) + ",'"
+//                + Controller.getInstance().getGame().getLobbyId() + "','" + colorString + "')";
+
+        String[] s = {"[X]=" + String.valueOf(x), "[Y]=" + String.valueOf(y), "[Event]=" + String.valueOf(event_dif), "[Id]=" + String.valueOf(drawID),
+                "[LobbyId]=" + Controller.getInstance().getGame().getLobbyId(),"[Color]=" + colorString};
+
+        drawPoints.add(s);
+
+        if (drawPoints.size() == 10 || event_dif > 1) {
+
+            createValues(drawPoints);
+            drawPoints.clear();
+        }
+    }
+
+    public void createValues(ArrayList<String[]> al) {
+
+        String values = "";
+
+        for (int i = 0; i < al.size(); i++) {
+
+            for (int j = 0; j < al.get(i).length; j++) {
+
+                values = values + "Values[" + i + "]" + al.get(i)[j] + "&";
+            }
+        }
+
+        values = values.substring(0, (values.length()-1));
+
+        Log.i("FU", "Statement: " + values);
+
+        new DrawPointsTask().execute(values);
+
+
     }
 
     public void setColor(String newColor){
 
         colorString = newColor.substring(1);
-
-        Log.i("FU", "colorstring: " + colorString);
 
         //set color
         invalidate();
@@ -163,7 +217,7 @@ public class DrawingView extends View {
 
     /**
      *
-     */
+     *//*
     private class DrawPointsTask extends AsyncTask<String, Void, Void> {
 
         @Override
@@ -180,6 +234,34 @@ public class DrawingView extends View {
 
             return null;
         }
-    }
+    }*/
 
+    /**
+     *
+     */
+    private class DrawPointsTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+
+            HttpClient httpclient = new DefaultHttpClient();
+
+            //Execute-String
+            String urlPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json"
+                    + "&method=TestPoints&" + strings[0];
+
+            Log.i("FU", "URL: " + urlPoints);
+
+            //Führt die GetFunktion aus
+            try {
+                httpclient.execute(new HttpGet(urlPoints));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //httpclient.getConnectionManager().shutdown();
+
+            return null;
+        }
+    }
 }
