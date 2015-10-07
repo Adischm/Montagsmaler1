@@ -61,11 +61,11 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
         //Handler, der die RefreshRunnable aufruft (in Intervallen)
         this.handler = new Handler();
-        handler.postDelayed(refreshRunnable, 4000);
+        handler.postDelayed(refreshRunnable, 5000);
 
         //Handler, der die ResetGameRunnable aufruft (1x)
         this.resetHandler = new Handler();
-        resetHandler.postDelayed(resetGameRunnable, 2000);
+        resetHandler.postDelayed(resetGameRunnable, 3000);
 
         //Handler, der den Start-Dialog schließt
         this.startHandler = new Handler();

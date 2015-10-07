@@ -46,7 +46,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         this.startDialog = new Dialog(this);
         this.stopHandler = 0;
         this.stopWatching = 0;
-        this.word = Controller.getInstance().getGame().getActiveWord();
+        this.word = "";
 
         //Zeigt einen Start-Dialog an, er wird per Handler automatisch geschlossen
         showStartDialog();
@@ -63,6 +63,8 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
+
+            word = Controller.getInstance().getGame().getActiveWord();
 
             if (stopWatching == 0) {
                 watchPainting();
