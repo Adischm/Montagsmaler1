@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LobbyTestActivity"
+            android:name=".LobbyOverviewActivity"
             android:label="@string/title_activity_lobby_test"
             android:screenOrientation="portrait" >
             android:parentActivityName=".MainActivity" >

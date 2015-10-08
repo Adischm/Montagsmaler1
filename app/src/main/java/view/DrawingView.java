@@ -23,44 +23,49 @@ import java.util.ArrayList;
 import Data.Data;
 import controller.Controller;
 
-
+/**
+ * Klasse für das View-Objekt (= Malfläche) der DrawActivity
+ */
 public class DrawingView extends View {
 
-    //drawing path
+    //--- Anfang Attribute ---
     private Path drawPath;
-    //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
-    //initial color
     private int paintColor = 0xFF000000;
-    //canvas
     private Canvas drawCanvas;
-    //canvas bitmap
     private Bitmap canvasBitmap;
-
     private float brushSize;
-
     private int event_dif = 0;
     private int event_color = 0;
     private int drawID = 0;
-
     private String colorString = "FF000000";
-
     private ArrayList<String[]> drawPoints;
 
+    //--- Ende Attribute ---
+
+    /**
+     * Konstruktor
+     * @param context
+     * @param attrs
+     */
     public DrawingView(Context context, AttributeSet attrs){
         super(context, attrs);
-        //httpclient = new DefaultHttpClient();
 
+        //Instanziert die Liste für Malpunkte
         this.drawPoints = new ArrayList<String[]>();
 
+        //Ruft die Setup-Methode auf
         setupDrawing();
     }
 
+    /**
+     * Methode zum initialen Setup der Fläche
+     */
     private void setupDrawing(){
 
+        //Die Strichbreite wird anhand der Bildschirmbreite festgelegt
         brushSize = (float) (Controller.getInstance().getUser().getScreenWidth() * 0.01);
 
-        //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
         drawPaint.setColor(paintColor);
@@ -88,13 +93,20 @@ public class DrawingView extends View {
     }
 
     @Override
+    /**
+     * Listener für die Touch-Eingabe
+     */
     public boolean onTouchEvent(MotionEvent event) {
-        //detect user touch
+
+        //Ermittelt die Koordinaten
         float touchX = event.getX();
         float touchY = event.getY();
 
+        //Übergibt die aktuelle Farbe
         event_color = paintColor;
 
+        //Für die 3 Touch-Events (DOWN, MOVE und UP) werden jeweils die "Malfunktionen" ausgeführt
+        //Zudem werden für jedes Event die Koordinaten, der Event-Wert und eine ID an die PostXY-Methode übergeben
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 drawPath.moveTo(touchX, touchY);
@@ -126,10 +138,15 @@ public class DrawingView extends View {
                 return false;
         }
 
+        //Aktualisiert die Ansicht
         invalidate();
         return true;
     }
 
+    /**
+     * Methode zum Leeren (= Löschen) der Malfläche
+     * Das Leeren wird mit Event-Wert 3 an PostXY übergeben
+     */
     public void deletePainting() {
         drawID++;
         postXY(0, 0, 3, drawID);
@@ -137,37 +154,38 @@ public class DrawingView extends View {
         invalidate();
     }
 
-    /*public void postXY(float x, float y, int event_dif, int drawID) {
-
-        x = x/Controller.getInstance().getUser().getScreenWidth();
-        y = y/Controller.getInstance().getUser().getScreenWidth();
-
-        //Execute-String
-        String urlDrawPoints = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method="
-                                + "setDrawPoint&x=" + x + "&y=" + y + "&event=" + event_dif + "&id=" + drawID
-                                + "&lobbyId=" + Controller.getInstance().getGame().getLobbyId()
-                                + "&color=" + colorString;
-
-        new DrawPointsTask().execute(urlDrawPoints);
-    }*/
-
+    /**
+     * Methode, die die Mal-Infos in Arrays für den Get-String umwandelt
+     * @param x
+     * @param y
+     * @param event_dif
+     * @param drawID
+     */
     public void postXY(float x, float y, int event_dif, int drawID) {
 
+        //Modifiziert die koordinaten mit der Breite der Bildschirms
         x = x/Controller.getInstance().getUser().getScreenWidth();
         y = y/Controller.getInstance().getUser().getScreenWidth();
 
+        //Erzeugt das Array und fügt es einer Liste hinzu
         String[] s = {"[X]=" + String.valueOf(x), "[Y]=" + String.valueOf(y), "[Event]=" + String.valueOf(event_dif), "[Id]=" + String.valueOf(drawID),
                 "[LobbyId]=" + Controller.getInstance().getGame().getLobbyId(),"[Color]=" + colorString};
 
         drawPoints.add(s);
 
+        //Hat die Liste 10 Einträge, oder wurde Event 2 oder 3 ausgelöst (Finger UP, bzw. Löschen)
+        //dann wird die Liste weitergegeben und anschließend geleert
         if (drawPoints.size() == 10 || event_dif > 1) {
-
             createValues(drawPoints);
             drawPoints.clear();
         }
     }
 
+    /**
+     * Methode, die den Finalen Get-String zur Übermittlung der Bildpunkte an die DB erzeugt
+     * Der String enthält am Ende ein Get-Array mit bis zu 10 Bildpunkten
+     * @param al
+     */
     public void createValues(ArrayList<String[]> al) {
 
         String values = "";
@@ -182,9 +200,14 @@ public class DrawingView extends View {
 
         values = values.substring(0, (values.length()-1));
 
+        //Übergibt den String
         new DrawPointsTask().execute(values);
     }
 
+    /**
+     * Setzt die Farbe
+     * @param newColor
+     */
     public void setColor(String newColor){
 
         colorString = newColor.substring(1);
@@ -196,28 +219,7 @@ public class DrawingView extends View {
     }
 
     /**
-     *
-     *//*
-    private class DrawPointsTask extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... strings) {
-
-            HttpClient httpclient = new DefaultHttpClient();
-
-            //Führt die GetFunktion aus
-            try {
-                httpclient.execute(new HttpGet(strings[0]));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-    }*/
-
-    /**
-     *
+     * Überträgt per HttpGet bis zu 10 Bildpunkte als Array an die DB
      */
     private class DrawPointsTask extends AsyncTask<String, Void, Void> {
 
@@ -237,12 +239,11 @@ public class DrawingView extends View {
                 e.printStackTrace();
             }
 
-            //httpclient.getConnectionManager().shutdown();
-
             return null;
         }
     }
 
+    //Getter & Setter
     public int getDrawID() {
         return drawID;
     }

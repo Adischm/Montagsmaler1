@@ -11,36 +11,40 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import controller.Controller;
-import schule.adrian.montagsmaler.R;
 
 /**
- * Created by Adrian on 24.09.15.
+ * Klasse für das View-Objekt (= Anzeigefläche) der WatchActivity
  */
 public class WatchingView extends View {
 
-    //drawing path
+    //--- Anfang Attribute ---
     private Path drawPath;
-    //drawing and canvas paint
     private Paint drawPaint, canvasPaint;
-    //initial color
     private int paintColor = 0xFF000000;
-    //canvas
     private Canvas drawCanvas;
-    //canvas bitmap
     private Bitmap canvasBitmap;
-
     private float brushSize;
 
-    public WatchingView(Context context, AttributeSet attrs){
+    //--- Ende Attribute ---
+
+    /**
+     * Konstruktor
+     * @param context
+     * @param attrs
+     */
+    public WatchingView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setupDrawing();
     }
 
+    /**
+     * Methode zum initialen Setup der Fläche
+     */
     private void setupDrawing(){
 
+        //Die Strichbreite wird anhand der Bildschirmbreite festgelegt
         brushSize = (float) (Controller.getInstance().getUser().getScreenWidth() * 0.01);
 
-        //get drawing area setup for interaction
         drawPath = new Path();
         drawPaint = new Paint();
         drawPaint.setColor(paintColor);
@@ -68,10 +72,19 @@ public class WatchingView extends View {
         canvas.drawPath(drawPath, drawPaint);
     }
 
+    /**
+     * Methode zur Darstellung des Gemalten auf der Fläche
+     * @param x
+     * @param y
+     * @param event
+     * @param color
+     */
     public void paintPicture(float x, float y, int event, String color) {
 
+        //Setzt die Farbe
         setColor("#" + color);
 
+        //Je nach Event-Wert wird ein Absetzen, ein Bewegen oder ein Abheben des Fingers simuliert
         switch (event) {
             case 0:
                 drawPath.moveTo(x, y);
@@ -93,16 +106,23 @@ public class WatchingView extends View {
             default:
         }
 
+        //Aktualisiert die Ansicht
         invalidate();
     }
 
+    /**
+     * Setzt die Farbe
+     * @param newColor
+     */
     public void setColor(String newColor){
-        //set color
         invalidate();
         paintColor = Color.parseColor(newColor);
         drawPaint.setColor(paintColor);
     }
 
+    /**
+     * Methode zum Leeren (= Löschen) der Fläche
+     */
     public void deletePainting() {
         drawCanvas.drawColor(Color.WHITE, PorterDuff.Mode.CLEAR);
         invalidate();

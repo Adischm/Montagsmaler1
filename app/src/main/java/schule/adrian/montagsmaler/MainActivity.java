@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button button_reg;
     private EditText editText_username;
     private EditText editText_password;
+    private TextView textView_inputFailed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +50,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         this.controller = Controller.getInstance();
+
+        controller.setWait(1);
+
         thread_getLobbys.run();
+
+        while (controller.getWait() == 1) {};
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         WindowManager wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE); // the results will be higher than using the activity context object or the getWindowManager() shortcut
@@ -63,8 +68,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         this.button_reg = (Button) findViewById(R.id.button_reg);
         this.editText_username = (EditText) findViewById(R.id.editText_username);
         this.editText_password = (EditText) findViewById(R.id.editText_password);
+        this.textView_inputFailed = (TextView) findViewById(R.id.textView_inputFailed);
         this.button_log.setOnClickListener(this);
         this.button_reg.setOnClickListener(this);
+
+        if (controller.getServerfailure() == 1) {
+            textView_inputFailed.setText("Webservice nicht erreichbar!");
+        }
 
         //Verhindert, dass der Internetzugriff über einen eigenen Thread laufen muss. Ggf Auslagerung in eigenen Thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -104,68 +114,90 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void requestPost() {
+        if((editText_username.getText().toString().equals("")) || (editText_password.getText().toString().equals(""))){
+            textView_inputFailed.setText("Bitte Username und Passwort eingeben");
+        }else if ((checkForSpace(editText_username) == true) || (checkForSpace(editText_password) == true)){
+            textView_inputFailed.setText("Aktion fehlgeschlagen: Leerstellen nicht erlaubt");
+        }else {
+            HttpResponse response = null;
 
-        HttpResponse response = null;
+            String user = editText_username.getText().toString();
+            String pass = editText_password.getText().toString();
+            String format = "json";
+            String method = "validateUser";
 
-        String user = editText_username.getText().toString();
-        String pass = editText_password.getText().toString();
-        String format = "json";
-        String method = "validateUser";
+            HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
+            List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+            params.add(new BasicNameValuePair("Benutzername", user));
+            params.add(new BasicNameValuePair("Passwort", pass));
+            params.add(new BasicNameValuePair("format", format));
+            params.add(new BasicNameValuePair("method", method));
 
-        HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
-
-        List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-        params.add(new BasicNameValuePair("Benutzername", user));
-        params.add(new BasicNameValuePair("Passwort", pass));
-        params.add(new BasicNameValuePair("format", format));
-        params.add(new BasicNameValuePair("method", method));
-
-        try {
-            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            // writing error to Log
-            e.printStackTrace();
-        }
-
-        try {
-            response = httpclient.execute(post);
-            HttpEntity entity = response.getEntity();
-
-            if (entity != null) {
-                //InputStream instream = entity.getContent();
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                try {
-                    entity.writeTo(out);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                String responseString = out.toString();
-
-                Log.i("FU", "Response" + responseString);
-
-                try {
-                    JSONObject jsonObject = new JSONObject(responseString);
-                    String jsonResponse = jsonObject.getString("validationStatus");
-
-                    if (jsonResponse.equals("1")) {
-
-                        controller.setWait(1);
-                        controller.setUser(user);
-
-                        //wartet auf Controller
-                        while (controller.getWait() == 1) {}
-
-                        //Erst wenn der Controller getWait() wieder 0 ist gehts weiter
-                        goToActivity_Lobby();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            try {
+                post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                // writing error to Log
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            try {
+                response = httpclient.execute(post);
+                HttpEntity entity = response.getEntity();
+
+                if (entity != null) {
+                    //InputStream instream = entity.getContent();
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    try {
+                        entity.writeTo(out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    String responseString = out.toString();
+
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseString);
+                        String jsonResponse = jsonObject.getString("validationStatus");
+
+                        if (jsonResponse.equals("1")) {
+
+                            controller.setWait(1);
+                            controller.setUser(user);
+
+                            //wartet auf Controller
+                            while (controller.getWait() == 1) {
+                            }
+
+                            //Erst wenn der Controller getWait() wieder 0 ist gehts weiter
+                            goToActivity_Lobby();
+                        }else{
+                            textView_inputFailed.setText("Username oder Passwort nicht korrekt");
+                        }
+                        //TODO validationstatus 0 wenn Username&Passwort inkorrekt --> abfangen!! (popup?)
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    textView_inputFailed.setText("Webserservice nicht erreichbar!");
+                }
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    public boolean checkForSpace(EditText text){
+        Boolean booleanSpace = false;
+        String checkText = text.getText().toString();
+
+        for (int i = 0; i < checkText.length(); i++){
+            if(checkText.charAt(i) == ' '){
+                booleanSpace = true;
+            }
+        }
+        return booleanSpace;
     }
 
     public void goToActivity_Register(){
@@ -174,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void goToActivity_Lobby(){
-        Intent profileIntent = new Intent(this, LobbyTestActivity.class);
+        Intent profileIntent = new Intent(this, LobbyOverviewActivity.class);
         startActivity(profileIntent);
     }
 
@@ -210,8 +242,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void run() {
             try {
-                //Zum Testen direkt zu Draw
-                //goToActivity_Draw();
                 goToActivity_Register();
             } catch (Exception e) {
                 e.printStackTrace();

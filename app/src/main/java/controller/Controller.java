@@ -2,6 +2,8 @@ package controller;
 
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.util.Log;
+import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -58,6 +60,9 @@ public class Controller {
 
     private int refreshUser = 0;
     private int refreshGame = 0;
+    private int serverfailure = 0;
+
+    private TextView textView_inputFailed;
     //--- Ende Attribute ---
 
     /**
@@ -71,9 +76,9 @@ public class Controller {
         this.game = Game.getInstance();
         this.lobbyList = new ArrayList<Lobby>();
 
-        //Handler, der die Refresh-Runnable aufruft
+        /*//Handler, der die Refresh-Runnable aufruft
         handler = new Handler();
-        handler.postDelayed(refreshRunnable, 500);
+        handler.postDelayed(refreshRunnable, 500);*/
     }
 
     /**
@@ -218,79 +223,88 @@ public class Controller {
                 e.printStackTrace();
             }
 
-            StatusLine statusLine = response.getStatusLine();
+            if (response != null) {
 
-            if(statusLine.getStatusCode() == HttpStatus.SC_OK) {
+                StatusLine statusLine = response.getStatusLine();
 
-                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                if(statusLine.getStatusCode() == HttpStatus.SC_OK) {
 
-                try {
-                    response.getEntity().writeTo(out);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-                String responseString = out.toString();
-
-                try {
-                    response.getEntity().consumeContent();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                //httpclient.getConnectionManager().shutdown();
-
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                ArrayList<Lobby> tempLobbyList = new ArrayList<Lobby>();
-
-                //Erzeugt aus dem Antwort-String ein JSON-Objekt
-                try {
-                    JSONObject jsonObject = new JSONObject(responseString);
-
-                    //Äusseres Array mit allen Lobbys
-                    JSONArray allLobbysArray = jsonObject.getJSONArray("data");
-
-                    //Aus dem Data-Array werden die LobbyIDs extrahiert und damit die zugehörigen User aus der DB geholt
-                    for (int i = 0; i < allLobbysArray.length(); i++) {
-
-                        //Mittleres Array mit Daten einer Lobby
-                        JSONArray oneLobbyArray = allLobbysArray.getJSONArray(i);
-
-                        //Inneres Array mit den Usern einer Lobby
-                        JSONArray lobbyUsersArray = oneLobbyArray.getJSONArray(4);
-
-                        //ArrayList für User
-                        ArrayList<String> lobbyUsers = new ArrayList<String>();
-
-                        for (int k = 0; k < lobbyUsersArray.length(); k++) {
-
-                            JSONArray oneUserArray = lobbyUsersArray.getJSONArray(k);
-
-                            //Die User einer Lobby werden der User-Liste zugefügt
-                            //Lobby-Owner werden markiert
-                            if ((Integer) oneUserArray.get(2) == 1) {
-                                lobbyUsers.add((String) oneUserArray.get(1) + " (Owner)");
-                            } else {
-                                lobbyUsers.add((String) oneUserArray.get(1));
-                            }
-                        }
-
-                        //Mit den Daten aus beiden Get-Aufrufen wird eine Lobby erstellt und der Lobby-Liste zugefügt
-                        Lobby lobby = new Lobby((String) oneLobbyArray.get(0), (String) oneLobbyArray.get(1), lobbyUsers);
-                        tempLobbyList.add(lobby);
+                    try {
+                        response.getEntity().writeTo(out);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
 
-                //Die Liste wird zunächst geleert
-                lobbyList.clear();
-                lobbyList = tempLobbyList;
+                    String responseString = out.toString();
+
+                    try {
+                        response.getEntity().consumeContent();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    ArrayList<Lobby> tempLobbyList = new ArrayList<Lobby>();
+
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
+                    try {
+                        JSONObject jsonObject = new JSONObject(responseString);
+
+                        //Äusseres Array mit allen Lobbys
+                        JSONArray allLobbysArray = jsonObject.getJSONArray("data");
+
+                        //Aus dem Data-Array werden die LobbyIDs extrahiert und damit die zugehörigen User aus der DB geholt
+                        for (int i = 0; i < allLobbysArray.length(); i++) {
+
+                            //Mittleres Array mit Daten einer Lobby
+                            JSONArray oneLobbyArray = allLobbysArray.getJSONArray(i);
+
+                            //Inneres Array mit den Usern einer Lobby
+                            JSONArray lobbyUsersArray = oneLobbyArray.getJSONArray(4);
+
+                            //ArrayList für User
+                            ArrayList<String> lobbyUsers = new ArrayList<String>();
+
+                            for (int k = 0; k < lobbyUsersArray.length(); k++) {
+
+                                JSONArray oneUserArray = lobbyUsersArray.getJSONArray(k);
+
+                                //Die User einer Lobby werden der User-Liste zugefügt
+                                //Lobby-Owner werden markiert
+                                if ((Integer) oneUserArray.get(2) == 1) {
+                                    lobbyUsers.add((String) oneUserArray.get(1) + " (Owner)");
+                                } else {
+                                    lobbyUsers.add((String) oneUserArray.get(1));
+                                }
+                            }
+
+                            //Mit den Daten aus beiden Get-Aufrufen wird eine Lobby erstellt und der Lobby-Liste zugefügt
+                            Lobby lobby = new Lobby((String) oneLobbyArray.get(0), (String) oneLobbyArray.get(1), lobbyUsers);
+                            tempLobbyList.add(lobby);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Die Liste wird zunächst geleert
+                    lobbyList.clear();
+                    lobbyList = tempLobbyList;
+
+                    //Handler, der die Refresh-Runnable aufruft
+                    handler = new Handler();
+                    handler.postDelayed(refreshRunnable, 500);
+
+                } else {
+                    serverfailure = 1;
+                }
             }
 
             //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
@@ -999,13 +1013,17 @@ public class Controller {
                 try {
                     refreshResponse.getEntity().writeTo(out);
                     refreshResponse.getEntity().consumeContent();
-                    out.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
 
                 String responseString = out.toString();
 
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
                 try {
                     //Erzeugt aus dem Antwort-String ein JSON-Objekt
@@ -1105,6 +1123,8 @@ public class Controller {
         }
     }
 
+    //--- Ende Tasks---
+
     //Getter & Setter
     public ArrayList<PicturePart> getpParts() {
         return pParts;
@@ -1184,5 +1204,13 @@ public class Controller {
 
     public void setRefreshGame(int refreshGame) {
         this.refreshGame = refreshGame;
+    }
+
+    public int getServerfailure() {
+        return serverfailure;
+    }
+
+    public void setServerfailure(int serverfailure) {
+        this.serverfailure = serverfailure;
     }
 }

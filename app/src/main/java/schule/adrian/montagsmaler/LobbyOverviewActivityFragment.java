@@ -7,11 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * A placeholder fragment containing a simple view.
+ * Platzhalter-Fragment mit Layout-Elementen für die LobbyOverviewActivity
  */
-public class LobbyTestActivityFragment extends Fragment {
+public class LobbyOverviewActivityFragment extends Fragment {
 
-    public LobbyTestActivityFragment() {
+    public LobbyOverviewActivityFragment() {
     }
 
     @Override

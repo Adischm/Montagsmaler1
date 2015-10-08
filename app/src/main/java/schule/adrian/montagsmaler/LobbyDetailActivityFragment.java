@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 /**
- * A placeholder fragment containing a simple view.
+ * Platzhalter-Fragment mit Layout-Elementen für die LobbyDetailActivity
  */
 public class LobbyDetailActivityFragment extends Fragment {
 
