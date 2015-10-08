@@ -2,10 +2,12 @@ package schule.adrian.montagsmaler;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,18 +18,23 @@ import android.widget.TextView;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,12 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         this.controller = Controller.getInstance();
-
-        controller.setWait(1);
-
         thread_getLobbys.run();
-
-        while (controller.getWait() == 1) {};
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         WindowManager wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE); // the results will be higher than using the activity context object or the getWindowManager() shortcut
@@ -69,12 +71,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         this.editText_username = (EditText) findViewById(R.id.editText_username);
         this.editText_password = (EditText) findViewById(R.id.editText_password);
         this.textView_inputFailed = (TextView) findViewById(R.id.textView_inputFailed);
+
         this.button_log.setOnClickListener(this);
         this.button_reg.setOnClickListener(this);
-
-        if (controller.getServerfailure() == 1) {
-            textView_inputFailed.setText("Webservice nicht erreichbar!");
-        }
 
         //Verhindert, dass der Internetzugriff über einen eigenen Thread laufen muss. Ggf Auslagerung in eigenen Thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -167,21 +166,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             //wartet auf Controller
                             while (controller.getWait() == 1) {
                             }
-
                             //Erst wenn der Controller getWait() wieder 0 ist gehts weiter
                             goToActivity_Lobby();
+
                         }else{
                             textView_inputFailed.setText("Username oder Passwort nicht korrekt");
                         }
-                        //TODO validationstatus 0 wenn Username&Passwort inkorrekt --> abfangen!! (popup?)
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                } else {
-                    textView_inputFailed.setText("Webserservice nicht erreichbar!");
                 }
-
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -204,17 +198,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Intent profileIntent = new Intent(this, RegisterActivity.class);
         startActivity(profileIntent);
     }
-
     public void goToActivity_Lobby(){
         Intent profileIntent = new Intent(this, LobbyOverviewActivity.class);
         startActivity(profileIntent);
     }
-
-    public void goToActivity_Draw(){
-        Intent profileIntent = new Intent(this, DrawActivity.class);
-        startActivity(profileIntent);
-    }
-
     Thread thread_getLobbys = new Thread(new Runnable(){
         @Override
         public void run() {
@@ -225,19 +212,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     });
-
     Thread thread_login = new Thread(new Runnable(){
         @Override
         public void run() {
             try {
                 requestPost();
-                //goToActivity_Lobby();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     });
-
     Thread thread_register = new Thread(new Runnable(){
         @Override
         public void run() {

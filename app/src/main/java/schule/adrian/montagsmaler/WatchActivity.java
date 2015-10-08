@@ -96,7 +96,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
                 //Zeigt den Info-Dialog
-                showInfoDialog("Es wurde gelöst!", "OK", 1);
+                showInfoDialog("Es wurde gelöst!\nLösung war:" + word, "OK", 1);
 
                 //Stoppt den Abruf der Bilddaten
                 stopWatching = 1;
@@ -108,7 +108,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             } else if (Controller.getInstance().getGame().getIsSolved() == 2 && !infoDialog.isShowing()) {
 
                 //Zeigt den Info-Dialog
-                showInfoDialog("Es wurde abgebrochen!\nDie Lösung war: " + word, "OK", 1);
+                showInfoDialog("Der Maler hat aufgegeben!", "OK", 1);
 
                 //Stoppt den Abruf der Bilddaten
                 stopWatching = 1;
@@ -207,6 +207,10 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
 
             //Holt den eingegebenen Text
             String solvingWord = editText_solvingWord.getText().toString().toLowerCase();
+
+            //Es werden alle Leerstellen aus dem Lösungswort gelöscht
+            //(Die Leerstellen könnten aufgrund von Autovervollständigung auftauchen)
+            solvingWord = solvingWord.replaceAll(" ", "");
 
             //Prüft, ob der Text mit dem Lösungswort übereinstimmt
             //Falls richtig:
