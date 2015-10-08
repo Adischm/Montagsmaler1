@@ -2,9 +2,9 @@ package schule.adrian.montagsmaler;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -170,8 +170,91 @@ public class LobbyOverviewActivity extends AppCompatActivity implements View.OnC
                     TextView tvLobbyName = (TextView) newLobbyDialog.findViewById(R.id.edit_lobbyname);
                     String lobbyName = tvLobbyName.getText().toString();
 
-                    //Erstellt per AsyncTask eine neue Lobby in der DB
-                    new CreateLobbyTask().execute(lobbyName);
+                    //Holt die ID des Users (also des Lobby-Erstellers)
+                    String userId = Controller.getInstance().getUser().getId();
+
+                    HttpClient httpclient = new DefaultHttpClient();
+
+                    //HttpResponse
+                    HttpResponse response = null;
+
+                    //Execute-String (Lobby wird erzeugt)
+                    String urlnewLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=newLobby&LobbyName=" + lobbyName + "&LobbyOwnerUserId=" + userId;
+
+                    //Führt die GetFunktion aus
+                    try {
+                        response = httpclient.execute(new HttpGet(urlnewLobby));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    StatusLine statusLine = response.getStatusLine();
+
+                    if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+
+                        //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+                        try {
+                            response.getEntity().writeTo(out);
+                            response.getEntity().consumeContent();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        String responseString = out.toString();
+
+                        try {
+                            out.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        //Erzeugt aus dem Antwort-String ein JSON-Objekt und daraus 2 Strings
+                        try {
+                            JSONObject jsonObject = new JSONObject(responseString);
+                            String status = jsonObject.getString("validationStatus");
+                            String lobbyId = jsonObject.getString("lobbyId");
+
+                            if (status.equals("1")) {
+
+                                //Nun wird der User der Lobby zugeordnet
+                                //Execute-String
+                                String urlSetUserToLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=setUserToLobby&LobbyId="
+                                        + lobbyId + "&UserId=" + userId + "&Owner=1";
+
+                                //Führt die GetFunktion aus
+                                try {
+                                    httpclient.execute(new HttpGet(urlSetUserToLobby));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                //Macht die neu erstellte Lobby zur ActiveLobby
+                                Controller.getInstance().setActiveLobby(lobbyId);
+
+                                //Aktualisiert die User-Daten des Controllers
+                                Controller.getInstance().getUser().setCurrentLobbyId(lobbyId);
+                                Controller.getInstance().getUser().setIsLobbyOwner(1);
+
+                                //Setzt das Wait-Flag des Controllers
+                                Controller.getInstance().setWait(1);
+
+                                //Aktualisiert die Lobby-Liste des Controllers
+                                Controller.getInstance().getLobbys();
+
+                                //Wartet auf den Controller
+                                while (Controller.getInstance().getWait() == 1) {}
+
+                                //Sobald der Controller den Wait-Wert auf 0 setzt, gehts weiter
+                                //Die Detail-Ansicht der erstellten Lobby wird aufgerufen
+                                thread_detail.run();
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             });
 
@@ -236,108 +319,4 @@ public class LobbyOverviewActivity extends AppCompatActivity implements View.OnC
             }
         }
     });
-
-    //--- Anfang Tasks ---
-
-    /**
-     * Macht einen User per HttpGet zum Lobby-Owner
-     */
-    private class CreateLobbyTask extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... strings) {
-
-            HttpClient httpclient = new DefaultHttpClient();
-
-            String lobbyName = strings[0];
-
-            //Holt die ID des Users (also des Lobby-Erstellers)
-            String userId = Controller.getInstance().getUser().getId();
-
-            //HttpResponse
-            HttpResponse response = null;
-
-            //Execute-String (Lobby wird erzeugt)
-            String urlnewLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=newLobby&LobbyName=" + lobbyName + "&LobbyOwnerUserId=" + userId;
-
-            //Führt die GetFunktion aus
-            try {
-                response = httpclient.execute(new HttpGet(urlnewLobby));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            StatusLine statusLine = response.getStatusLine();
-
-            if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-
-                //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                try {
-                    response.getEntity().writeTo(out);
-                    response.getEntity().consumeContent();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                String responseString = out.toString();
-
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                //Erzeugt aus dem Antwort-String ein JSON-Objekt und daraus 2 Strings
-                try {
-                    JSONObject jsonObject = new JSONObject(responseString);
-                    String status = jsonObject.getString("validationStatus");
-                    String lobbyId = jsonObject.getString("lobbyId");
-
-                    if (status.equals("1")) {
-
-                        //Nun wird der User der Lobby zugeordnet
-                        //Execute-String
-                        String urlSetUserToLobby = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=setUserToLobby&LobbyId="
-                                + lobbyId + "&UserId=" + userId + "&Owner=1";
-
-                        //Führt die GetFunktion aus
-                        try {
-                            httpclient.execute(new HttpGet(urlSetUserToLobby));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        //Macht die neu erstellte Lobby zur ActiveLobby
-                        Controller.getInstance().setActiveLobby(lobbyId);
-
-                        //Aktualisiert die User-Daten des Controllers
-                        Controller.getInstance().getUser().setCurrentLobbyId(lobbyId);
-                        Controller.getInstance().getUser().setIsLobbyOwner(1);
-
-                        //Setzt das Wait-Flag des Controllers
-                        Controller.getInstance().setWait(1);
-
-                        //Aktualisiert die Lobby-Liste des Controllers
-                        Controller.getInstance().getLobbys();
-
-                        //Wartet auf den Controller
-                        while (Controller.getInstance().getWait() == 1) {}
-
-                        //Sobald der Controller den Wait-Wert auf 0 setzt, gehts weiter
-                        //Die Detail-Ansicht der erstellten Lobby wird aufgerufen
-                        thread_detail.run();
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return null;
-        }
-    }
-
-    //--- Ende Tasks ---
 }

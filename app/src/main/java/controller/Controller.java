@@ -300,6 +300,7 @@ public class Controller {
 
             //Setzt den Wait-Wert auf 0 -> Damit kann die wartende Activity weiter machen
             wait = 0;
+
             return null;
         }
     }
