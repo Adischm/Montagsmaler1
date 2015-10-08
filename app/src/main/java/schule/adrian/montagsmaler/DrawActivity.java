@@ -123,7 +123,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
             //Status-Prüfung, die ggf. in eine neue Activity wechselt (-> neue Runde)
             //Prüft zunächst, ob es User mit Status "Ready" gibt
-            if (Controller.getInstance().getGame().getUsersReady() > 0) {
+            if (Controller.getInstance().getGame().getUsersReady() > 0 && infoDialog.isShowing()) {
 
                 //Prüft dann, ob alle User "Ready" sind
                 if (Controller.getInstance().getGame().getUserIds().size() == Controller.getInstance().getGame().getUsersReady()) {

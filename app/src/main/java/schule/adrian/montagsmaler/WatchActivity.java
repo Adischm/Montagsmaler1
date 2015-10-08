@@ -220,7 +220,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
                 Controller.getInstance().setResolved(Controller.getInstance().getUser().getId(), "1");
 
                 //Zeigt den Info-Dialog
-                showInfoDialog("Es wurde abgebrochen!\nDie Lösung war: " + word, "OK", 1);
+                showInfoDialog("Die Lösung ist richtig\nDu bist der nächste Maler", "OK", 1);
 
                 //Stoppt den Abruf der Bilddaten
                 stopWatching = 1;
