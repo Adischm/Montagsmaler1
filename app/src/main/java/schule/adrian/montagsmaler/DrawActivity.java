@@ -323,7 +323,6 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
                     //Setzt den Status des Users auf "Ready"
                     Controller.getInstance().setUserReady();
                 }
-
             }
         });
 
@@ -356,7 +355,7 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
                 //Mit dieser Zahl wird der nächste Maler festgelegt
                 int randomInt = (int)(Math.random() * Controller.getInstance().getGame().getUserIds().size());
 
-                //Übergibt den GameActive Status und nextPainter an die DB
+                //Übergibt den Resolved Status und nextPainter an die DB
                 for (int i = 0; i < Controller.getInstance().getGame().getUserIds().size(); i++) {
 
                     //Bei match mit der Zufallszahl: isPainter = 1 ...
@@ -364,7 +363,6 @@ public class DrawActivity extends AppCompatActivity implements View.OnClickListe
 
                         //Ruft über den Controller einen Task auf, der Resolved und nextPainter in der DB setzt
                         Controller.getInstance().setResolved(Controller.getInstance().getGame().getUserIds().get(i), "2");
-
                     }
                 }
 

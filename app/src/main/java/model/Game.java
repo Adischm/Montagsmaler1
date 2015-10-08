@@ -22,6 +22,7 @@ public class Game {
     private String id;
     private String lobbyId;
     private String activeWord;
+    private String canceledWord;
     private String painterId;
     private String nextPainterId;
     private int usersReady;
@@ -39,6 +40,7 @@ public class Game {
         this.id = "";
         this.lobbyId = "";
         this.activeWord = "";
+        this.canceledWord = "";
         this.painterId = "";
         this.nextPainterId = "";
         this.usersReady = 0;
@@ -70,6 +72,14 @@ public class Game {
 
     public void setActiveWord(String activeWord) {
         this.activeWord = activeWord;
+    }
+
+    public String getCanceledWord() {
+        return canceledWord;
+    }
+
+    public void setCanceledWord(String canceledWord) {
+        this.canceledWord = canceledWord;
     }
 
     public String getPainterId() {

@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,8 +36,8 @@ import controller.Controller;
 public class LobbyOverviewActivity extends AppCompatActivity implements View.OnClickListener {
 
     //--- Anfang Attribute ---
-    public Button button_new;
-    public Button button_refresh;
+    private Button button_new;
+    private Button button_refresh;
     private ArrayList<String> lobbyNames;
 
     //--- Ende Attribute ---
@@ -80,18 +79,18 @@ public class LobbyOverviewActivity extends AppCompatActivity implements View.OnC
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
 
-                //Bei Klick auf einen Listeneintrag wird zunächst der passende Lobby-Name ermittelt
-                String lobbyInfo = (String) adapterView.getItemAtPosition(position);
+            //Bei Klick auf einen Listeneintrag wird zunächst der passende Lobby-Name ermittelt
+            String lobbyInfo = (String) adapterView.getItemAtPosition(position);
 
-                //Mit dem Lobby-Namen kann die ActiveLobby des Controllers gesetzt werden
-                for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
-                    if (Controller.getInstance().getLobbyList().get(i).getName().equals(lobbyInfo)) {
-                        Controller.getInstance().setActiveLobby(Controller.getInstance().getLobbyList().get(i).getId());
-                    }
+            //Mit dem Lobby-Namen kann die ActiveLobby des Controllers gesetzt werden
+            for (int i = 0; i < Controller.getInstance().getLobbyList().size(); i++) {
+                if (Controller.getInstance().getLobbyList().get(i).getName().equals(lobbyInfo)) {
+                    Controller.getInstance().setActiveLobby(Controller.getInstance().getLobbyList().get(i).getId());
                 }
+            }
 
-                //Die Detail-Ansicht wird im eigenen Thread aufgerufen
-                thread_detail.run();
+            //Die Detail-Ansicht wird im eigenen Thread aufgerufen
+            thread_detail.run();
             }
         });
 

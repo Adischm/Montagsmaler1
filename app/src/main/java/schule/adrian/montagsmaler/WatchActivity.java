@@ -85,7 +85,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
         public void run() {
 
             //Holt den aktuellen Malbegriff (für die Anzeige bei Abbruch der Runde)
-            word = Controller.getInstance().getGame().getActiveWord();
+            word = Controller.getInstance().getGame().getCanceledWord();
 
             //Ruft die Methode zum Abruf der Bildpunkte auf
             if (stopWatching == 0) {
@@ -96,7 +96,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             if (Controller.getInstance().getGame().getIsSolved() == 1 && !infoDialog.isShowing()) {
 
                 //Zeigt den Info-Dialog
-                showInfoDialog("Es wurde gelöst!\nLösung war:" + word, "OK", 1);
+                showInfoDialog("Es wurde gelöst!\nLösung war: " + word, "OK", 1);
 
                 //Stoppt den Abruf der Bilddaten
                 stopWatching = 1;
@@ -108,7 +108,7 @@ public class WatchActivity extends AppCompatActivity implements View.OnClickList
             } else if (Controller.getInstance().getGame().getIsSolved() == 2 && !infoDialog.isShowing()) {
 
                 //Zeigt den Info-Dialog
-                showInfoDialog("Der Maler hat aufgegeben!", "OK", 1);
+                showInfoDialog("Der Maler hat aufgegeben!\nLösung war: " + word, "OK", 1);
 
                 //Stoppt den Abruf der Bilddaten
                 stopWatching = 1;

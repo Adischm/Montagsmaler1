@@ -2,8 +2,6 @@ package controller;
 
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.util.Log;
-import android.widget.TextView;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -62,7 +60,6 @@ public class Controller {
     private int refreshGame = 0;
     private int serverfailure = 0;
 
-    private TextView textView_inputFailed;
     //--- Ende Attribute ---
 
     /**
@@ -171,7 +168,7 @@ public class Controller {
      */
     public void setResolved(String nextPainter, String state) {
 
-        new SetResolvedTask().execute(nextPainter, state);
+        new SetResolvedTask().execute(nextPainter, state, game.getActiveWord());
     }
 
     /**
@@ -652,7 +649,7 @@ public class Controller {
     }
 
     /**
-     * Setzt per HttpGet den ResolvedStatus eines Games und übergibt die ID des Lösers (-> er wird nächster Maler)
+     * Setzt per HttpGet den ResolvedStatus eines Games und übergibt die ID des Lösers (-> er wird nächster Maler) sowie das gelöste (bzw. gecancelte) Wort
      */
     private class SetResolvedTask extends AsyncTask<String, Void, Void> {
 
@@ -663,10 +660,11 @@ public class Controller {
 
             String nextPainter = strings[0];
             String state = strings[1];
+            String word = strings[2];
 
             //Execute-String
             String urlSetResolved = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=SetResolved&NextPainter=" + nextPainter
-                                + "&LobbyId=" + game.getLobbyId() + "&State=" + state;
+                                + "&LobbyId=" + game.getLobbyId() + "&State=" + state + "&Word=" + word;
 
             //Führt die GetFunktion aus
             try {
@@ -798,161 +796,6 @@ public class Controller {
             return null;
         }
     }
-
-    /**
-     *
-     *//*
-    private class AutoRefreshDataTask extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-
-            //Autoschleife mit allen Update-Abfragen (User, Game, Lobby...?)
-
-            //Aktualisiert die Lobbys
-            getLobbys();
-
-            //Aktualisiert den User
-            if (refreshUser == 1) {
-
-                HttpClient userhttpclient = new DefaultHttpClient();
-
-                //HttpResponse
-                HttpResponse refreshUserResponse = null;
-
-                //Execute-String
-                String urlRefreshUser = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetUserInformation&UserId=" + user.getId();
-
-                //Führt die GetFunktion aus
-                try {
-                    refreshUserResponse = userhttpclient.execute(new HttpGet(urlRefreshUser));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                StatusLine statusLine = refreshUserResponse.getStatusLine();
-
-                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-
-                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                    try {
-                        refreshUserResponse.getEntity().writeTo(out);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    String responseString = out.toString();
-
-                    try {
-                        refreshUserResponse.getEntity().consumeContent();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //httpclient.getConnectionManager().shutdown();
-
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
-                    try {
-                        JSONObject jsonObject = new JSONObject(responseString);
-                        JSONArray ja = jsonObject.getJSONArray("data");
-
-                        user.setCurrentLobbyId((String) ja.get(0));
-                        user.setIsLobbyOwner((Integer) ja.get(1));
-                        user.setIsPainter((Integer) ja.get(2));
-                        user.setGameActive((Integer) ja.get(3));
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            //Aktualisiert das Game
-            if (refreshGame == 1) {
-
-                HttpClient gamehttpclient = new DefaultHttpClient();
-
-                //HttpResponse
-                HttpResponse refreshGameResponse = null;
-
-                //Execute-String
-                String urlRefreshGame = "http://" + Data.SERVERIP + "/MontagsMalerService/index.php?format=json&method=GetGameInformation&LobbyId=" + game.getLobbyId();
-
-                //Führt die GetFunktion aus
-                try {
-                    refreshGameResponse = gamehttpclient.execute(new HttpGet(urlRefreshGame));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                StatusLine statusLine = refreshGameResponse.getStatusLine();
-
-                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-
-                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-                    try {
-                        refreshGameResponse.getEntity().writeTo(out);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    String responseString = out.toString();
-
-                    try {
-                        refreshGameResponse.getEntity().consumeContent();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //httpclient.getConnectionManager().shutdown();
-
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
-                    try {
-                        JSONObject jsonObject = new JSONObject(responseString);
-                        JSONArray ja = jsonObject.getJSONArray("data");
-
-                        game.setId((String)ja.get(0));
-                        game.setPainterId((String) ja.get(1));
-                        game.setNextPainterId((String) ja.get(2));
-                        game.setIsSolved((Integer) ja.get(3));
-                        game.setActiveWord((String) ja.get(4));
-                        game.setUsersReady((Integer) ja.get(5));
-
-                        //Bildet ein inneres Array aus dem data-Array mit UserIds
-                        JSONArray jaa = ja.getJSONArray(6);
-
-                        game.getUserIds().clear();
-
-                        //Übergibt die UserIds an das Game-Objekt
-                        for (int i = 0; i < jaa.length(); i++) {
-
-                            game.getUserIds().add((String) jaa.get(i));
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            return null;
-        }
-    }*/
-
 
     /**
      * Der Autorefresh-Task läuft kontinuierlich im Hintegrund und aktualisiert ständig die Lobby-, User- und Game-Daten
@@ -1090,10 +933,11 @@ public class Controller {
                         game.setNextPainterId((String) gameDataArray.get(2));
                         game.setIsSolved((Integer) gameDataArray.get(3));
                         game.setActiveWord((String) gameDataArray.get(4));
-                        game.setUsersReady((Integer) gameDataArray.get(5));
+                        game.setCanceledWord((String) gameDataArray.get(5));
+                        game.setUsersReady((Integer) gameDataArray.get(6));
 
                         //Bildet ein inneres Array aus dem gamedata-Array mit UserIds
-                        JSONArray gameUserArray = gameDataArray.getJSONArray(6);
+                        JSONArray gameUserArray = gameDataArray.getJSONArray(7);
 
                         game.getUserIds().clear();
 

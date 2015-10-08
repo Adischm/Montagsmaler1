@@ -40,9 +40,9 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
     private Button button_join;
     private Button button_leave;
     private Button button_start;
-    ArrayList<String> userNames;
-    ArrayList<String> tempUserNames;
-    ArrayAdapter<String> lobbylistAdapter;
+    private ArrayList<String> userNames;
+    private ArrayList<String> tempUserNames;
+    private ArrayAdapter<String> lobbylistAdapter;
 
     //--- Ende Attribute ---
 
@@ -265,7 +265,6 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
                 //Übergibt den Ready-Status an die DB
                 Controller.getInstance().setUserReady();
-
             }
         });
 
@@ -301,6 +300,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
      * Die Zurück-Taste ruft die Lobby-Übersichts-Activity auf
      */
     public void onBackPressed() {
+
         thread_lobby.run();
     }
 
@@ -393,7 +393,7 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
     public void goToActivity_Lobby(){
         Intent profileIntent = new Intent(this, LobbyOverviewActivity.class);
         startActivity(profileIntent);
-        this.finish();
+        //this.finish();
     }
 
     //Threads für den Wechsel der Activity
@@ -457,11 +457,6 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
             //Führt die GetFunktion aus
             try {
                 httpclient.execute(new HttpGet(urlSetUserToLobby));
-
-                //TODO kann das raus? Reicht der Refresh vom Controller
-                //Aktualisiert die Lobby-Liste des Controllers
-                //Controller.getInstance().getLobbys();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -525,4 +520,3 @@ public class LobbyDetailActivity extends AppCompatActivity implements View.OnCli
 
     //--- Ende Tasks ---
 }
-

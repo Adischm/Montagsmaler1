@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,10 +29,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Data.Data;
-import controller.Controller;
 
+/**
+ * Screen für die Registrierung neuer User
+ */
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener{
 
+    //--- Start Attribute ---
     private EditText editText_username;
     private EditText editText_password;
     private EditText editText_password_repeat;
@@ -41,20 +43,26 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private TextView textView_inputFailed;
     private Dialog successDialog;
 
+    //--- Ende Attribute ---
+
     @Override
+    /**
+     * Konstruktor
+     */
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Layout wird zugeordnet
         setContentView(R.layout.activity_register);
 
+        //Instanziert Buttons, Text-Felder und Dialoge
         editText_username = (EditText) findViewById(R.id.editText_username);
         editText_password = (EditText) findViewById(R.id.editText_password);
         editText_password_repeat = (EditText) findViewById(R.id.editText_passwordRepeat);
         button_register = (Button) findViewById(R.id.button_register);
+        button_register.setOnClickListener(this);
         textView_inputFailed = (TextView) findViewById(R.id.textView_inputFailed);
         successDialog = new Dialog(this);
-
-        button_register.setOnClickListener(this);
-
     }
 
     @Override
@@ -80,8 +88,15 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     }
 
     @Override
+    /**
+     * Click-Listener für alle Buttons der Activity
+     */
     public void onClick(View v) {
+
+        //Button "Registrieren"
         if(v == button_register){
+
+            //Ruft den Register-Thread auf
             thread_registerAccount.run();
         }
     }
@@ -103,8 +118,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onClick(View v) {
 
+                //Ruft den Thread zum Wechsel in die MainActivity auf
                 thread_main.run();
-
             }
         });
 
@@ -112,25 +127,45 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         successDialog.show();
     }
 
-    public void registerAccount(){
-        if((editText_username.getText().toString().equals("")) || (editText_password.getText().toString().equals("")) || (editText_password_repeat.getText().toString().equals(""))){
+    /**
+     * Methode, die die Registrierungsdaten validiert und dann per HttpPost an den Server überträgt
+     */
+    public void registerAccount() {
+
+        //Prüft, ob Username und Passwort und Passwort-Wiederholung gefüllt wurde
+        if((editText_username.getText().toString().equals("")) || (editText_password.getText().toString().equals("")) || (editText_password_repeat.getText().toString().equals(""))) {
+
             textView_inputFailed.setText("Bitte Username und Passwort eingeben");
-        }else if ((checkForSpace(editText_username) == true) || (checkForSpace(editText_password) == true) || (checkForSpace(editText_password_repeat))) {
+
+        //Prüft, ob Leerzeichen enthalten sind
+        } else if ((checkForSpace(editText_username) == true) || (checkForSpace(editText_password) == true) || (checkForSpace(editText_password_repeat))) {
+
             textView_inputFailed.setText("Aktion fehlgeschlagen: Leerstellen nicht erlaubt");
-        }else if(!editText_password.getText().toString().equals(editText_password_repeat.getText().toString())){
+
+        //Prüft, ob Passwort und Passwort-Wiederholung identisch sind
+        } else if(!editText_password.getText().toString().equals(editText_password_repeat.getText().toString())){
+
             textView_inputFailed.setText("Die Passwörter stimmen nicht überein!");
-        }else {
+
+        //Wurde alles korrekt eingegeben, werden die Daten per HttpPost an den Server übertragen
+        } else {
+
             HttpClient httpClient = new DefaultHttpClient();
+
+            //HttpResponse
             HttpResponse response = null;
 
-            HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
-
+            //Holt die für die Post-Funktion benötigten Daten
             String user = editText_username.getText().toString();
             String pass = editText_password.getText().toString();
             String passRepeat = editText_password_repeat.getText().toString();
             String format = "json";
             String method = "newAccount";
 
+            //Erzeugt den HttpPost
+            HttpPost post = new HttpPost("http://" + Data.SERVERIP + "/MontagsMalerService/index.php");
+
+            //Erzeugt Post-Parameter
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
             params.add(new BasicNameValuePair("LoginName", user));
             params.add(new BasicNameValuePair("LoginPasswort", pass));
@@ -144,13 +179,16 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 e.printStackTrace();
             }
 
+            //Führt die PostFunktion aus
             try {
                 response = httpClient.execute(post);
                 HttpEntity entity = response.getEntity();
 
                 if (entity != null) {
 
+                    //Schreibt die Antwort in einen Output Stream und erzeugt daraus einen String
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
+
                     try {
                         entity.writeTo(out);
                     } catch (IOException e) {
@@ -159,16 +197,21 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
                     String responseString = out.toString();
 
+                    //Erzeugt aus dem Antwort-String ein JSON-Objekt
                     try {
                         JSONObject jsonObject = new JSONObject(responseString);
                         String jsonStatus = jsonObject.getString("registerStatus");
                         String jsonResponse = jsonObject.getString("data");
 
+                        //Prüft den Register-Status
                         if (jsonStatus.equals("1")){
 
+                            //Ist alles korrekt, dann wird ein entsprechender Dialog aufgerufen
                             showSuccessDialog();
 
-                        }else{
+                        } else {
+
+                            //Bei fehlerhafter Registrierung erfolgt eine Text-Ausgabe
                             textView_inputFailed.setText(jsonResponse);
                         }
                     } catch (JSONException e) {
@@ -181,25 +224,35 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    /**
+     * Methode, die eingegebenen Text auf Leerzeichen prüft
+     * @param text
+     * @return
+     */
     public boolean checkForSpace(EditText text){
         Boolean booleanSpace = false;
         String checkText = text.getText().toString();
 
+        //Prüft auf Leerzeichen
         for (int i = 0; i < checkText.length(); i++){
             if(checkText.charAt(i) == ' '){
                 booleanSpace = true;
             }
         }
+
+        //True = Leerzeichen vorhanden
         return booleanSpace;
     }
 
+
+    //Methode zum Wechsel der Activity
     public void goToActivity_Main(){
         Intent profileIntent = new Intent(this, MainActivity.class);
         startActivity(profileIntent);
         this.finish();
     }
 
-    //Threads für den Wechsel der Activity
+    //Thread für den Wechsel der Activity
     Thread thread_main = new Thread(new Runnable(){
         @Override
         public void run() {
@@ -211,11 +264,11 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
     });
 
+    //Thread für die Register-Methode
     Thread thread_registerAccount = new Thread(new Runnable(){
         @Override
         public void run() {
             try {
-                //Your code goes here
                 registerAccount();
             } catch (Exception e) {
                 e.printStackTrace();
